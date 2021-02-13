@@ -22,13 +22,18 @@ mx,my,mz = magnosensor.magnetic
 oPos = [mx, my, mz]
 x = 1
 start = time.time()
+initTime = start
 while x == 1:
 	print('Range: {}mm'.format(lidarsensor.range))
 	end = time.time()
 	if (end - start) > 5:
 		temp = tempsensor.temperature
 		start = time.time()
-		print("Temperature: ", temp)	
+		print("Temperature: ", temp)
+		if temp > 24:
+			print("Too Warm")
+		if temp < 16:
+			print("Too Cold")	
 	mx, my, mz = magnosensor.magnetic
 	print("[{}]".format(time.monotonic()))
 	print("X: {} uT".format(mx))
@@ -52,6 +57,7 @@ while x == 1:
 			buzzer.on()
 			time.sleep(1)
 			buzzer.off()
+			print("Device was used for" , time.time() - initTime, "seconds")
 	
 	if magnosensor.last_status > adafruit_mlx90393.STATUS_OK:
 		magnosensor.display_status()
