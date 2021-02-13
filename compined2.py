@@ -47,9 +47,11 @@ while x == 1:
 		buzzer.on()
 		time.sleep(0.5)
 	buzzer.off()
+	button.wait_for_press(2)
 	if button.is_pressed:
 		time.sleep(1)
 		if button.is_pressed == False:
+			print("Button reset")
 			mx,my,mz = magnosensor.magnetic	
 			oPos = [mx, my, mz]
 		else:
