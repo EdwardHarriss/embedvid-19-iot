@@ -21,10 +21,14 @@ magnosensor = adafruit_mlx90393.MLX90393(i2c, gain=adafruit_mlx90393.GAIN_1X)
 mx,my,mz = magnosensor.magnetic
 oPos = [mx, my, mz]
 x = 1
+awayTime = 0
+lookingAway = False
+totalAwayTime = 0
 start = time.time()
 initTime = start
 while x == 1:
-	print('Range: {}mm'.format(lidarsensor.range))
+	f_d = lidarsensor.range
+	print("Range:", f_d,"mm")
 	end = time.time()
 	if (end - start) > 5:
 		temp = tempsensor.temperature
@@ -43,9 +47,16 @@ while x == 1:
 	mPos = [abs(cPos[0] - oPos[0]), abs(cPos[1] - oPos[1]), abs(cPos[2] - oPos[2])] 
 	d = mPos[0]*mPos[0] + mPos[1]*mPos[1] + mPos[2]*mPos[2]
 	d = math.sqrt(d)
-	if(d > 10):
+	if d > 10 or f_d > 600:
 		buzzer.on()
 		time.sleep(0.5)
+		if lookingAway == False:
+			awayTime = time.time()
+			lookingAway = True
+	else:	
+		if lookingAway == True:
+			lookingAway = False
+			totalAwayTime = totalAwayTime + time.time() - awayTime
 	buzzer.off()
 	button.wait_for_press(2)
 	if button.is_pressed:
@@ -60,6 +71,7 @@ while x == 1:
 			time.sleep(1)
 			buzzer.off()
 			print("Device was used for" , time.time() - initTime, "seconds")
+			print("Time spent not working properly",totalAwayTime,"s")
 	
 	if magnosensor.last_status > adafruit_mlx90393.STATUS_OK:
 		magnosensor.display_status()
