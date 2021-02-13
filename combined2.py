@@ -37,5 +37,8 @@ while x == 1:
 		buzzer.on()
 		time.sleep(0.5)
 	buzzer.off()
+	if button.is_pressed:
+		mx,my,mz = magnosensor.magnetic	
+		oPos = [mx, my, mz]
 	if magnosensor.last_status > adafruit_mlx90393.STATUS_OK:
 		magnosensor.display_status()
