@@ -7,6 +7,16 @@ import adafruit_mlx90393
 import time
 from gpiozero import Button
 from gpiozero import Buzzer
+from gpiozero import RGBLED
+
+led = RGBLED(red = 23, green = 22, blue = 17)
+
+led.red = 1
+led.blue = 1
+led.green = 1
+
+led.color = (1,1,1)
+
 
 buzzer = Buzzer(24)
 
