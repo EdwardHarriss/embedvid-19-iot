@@ -4,6 +4,7 @@ import smbus2
 import adafruit_mlx90393
 import adafruit_vl53l0x
 import time
+import json
 from gpiozero import Button, Buzzer
 import math
 import paho.mqtt.client as mqtt
@@ -59,6 +60,8 @@ def get_temp():
 
 
 def reset():
+    global movement
+    movement = False
     mx, my, mz = sensor_mag.magnetic
     user.set_values(mx, my, mz, sensor_tof.range)
 
@@ -76,8 +79,11 @@ def pressed():
         buzzer.on()
         time.sleep(0.1)
         buzzer.off()
-        quit()
-    reset()
+        global code_off
+        code_off = True
+        time.sleep(1.0)
+    else:
+        reset()
 
 def average_calculator(mx, my, mz, md, angle_ave, distance_ave, number):
     angle_ave = (angle_ave/number) +  (math.sqrt(mx**2 + my**2 + mz**2)/number)
@@ -92,7 +98,7 @@ def movement_calc(angle_ave, distance_ave):
     return False
 
 def send_data(movement, distance_ave, mt):
-    client = mqqtt.Client()
+    client = mqtt.Client()
     error_code = client.connect("test.mosquitto.org",port=1883)
     if error_code != 0:
         return
@@ -100,20 +106,45 @@ def send_data(movement, distance_ave, mt):
         data_package = { "Time": time.time(), "At Desk": movement, "Average Distance": distance_ave, "Temperature": mt }
     else:
         data_package = { "Time": time.time(), "At Desk": movement, "Average Distance": 0, "Temperature": 0}
-    client.publish("IC.embedded/Embedvid-19/data",data_package)
+    json_string = json.dumps(data_package)
+    client.publish("IC.embedded/Embedvid-19/data",json_string)
+    print("Message Sent")
 
 print("System ready")
 user = User()
 
-button.wait_for_press()
-pressed()
 time_scale = time.time()
 number = 1
 distance_ave = 0
 angle_ave = 0
 movement = False
+code_off = True
 
 while True:
+
+    while code_off:
+        button.wait_for_press()
+        pressed()
+        code_off = False
+        time_scale = time.time()
+        number = 1
+        distance_ave = 0
+        angle_ave = 0
+        movement = False
+    
+    while movement:   #need to press button again
+        if time.time() - time_scale < 30:
+            buzzer.on()
+            time.sleep(3.0)
+            buzzer.off()
+            time.sleep(3.0)
+        else:
+            send_data(movement, distance_ave, mt)
+            time_scale = time.time()
+        if button.is_pressed:
+            presssed()
+            movement = False
+
     mx, my, mz = sensor_mag.magnetic
     md = sensor_tof.range
     u = user.get_values()
@@ -125,16 +156,11 @@ while True:
     angle_ave, distance_ave, number = average_calculator(mx, my, mz, md, angle_ave, distance_ave, number)
     if time.time() - time_scale > 29:
         mt = get_temp()
-        if movement == False:
-            movement = movement_calc(angle_ave, distance_ave)
-        if movement:
-            buzzer.on()
-            time.sleep(5.0)
-            buzzer.off()
+        movement = movement_calc(angle_ave, distance_ave)
+        send_data(movement, distance_ave, mt)
         angle_ave = 0
         distance_ave = 0
         number = 1
         time_scale = time.time()
-        send_data(movement, distance_ave, mt)
 
 
