@@ -6,6 +6,7 @@ import adafruit_vl53l0x
 import time
 from gpiozero import Button, Buzzer
 import math
+import paho.mqtt.client as mqtt
 
 i2c = busio.I2C(board.SCL, board.SDA)
 sensor_mag = adafruit_mlx90393.MLX90393(i2c, gain=adafruit_mlx90393.GAIN_1X)
@@ -90,6 +91,17 @@ def movement_calc(angle_ave, distance_ave):
         return True
     return False
 
+def send_data(movement, distance_ave, mt):
+    client = mqqtt.Client()
+    error_code = client.connect("test.mosquitto.org",port=1883)
+    if error_code != 0:
+        return
+    if movement == False:
+        data_package = { "Time": time.time(), "At Desk": movement, "Average Distance": distance_ave, "Temperature": mt }
+    else:
+        data_package = { "Time": time.time(), "At Desk": movement, "Average Distance": 0, "Temperature": 0}
+    client.publish("IC.embedded/Embedvid-19/data",data_package)
+
 print("System ready")
 user = User()
 
@@ -121,5 +133,6 @@ while True:
         distance_ave = 0
         number = 1
         time_scale = time.time()
+        send_data(movement, distance_ave, mt)
 
 
