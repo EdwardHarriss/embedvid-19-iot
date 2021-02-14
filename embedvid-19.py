@@ -111,6 +111,7 @@ time_scale = time.time()
 number = 1
 distance_ave = 0
 angle_ave = 0
+movement = False
 
 while True:
     mx, my, mz = sensor_mag.magnetic
@@ -124,7 +125,8 @@ while True:
     angle_ave, distance_ave, number = average_calculator(mx, my, mz, md, angle_ave, distance_ave, number)
     if time.time() - time_scale > 29:
         mt = get_temp()
-        movement = movement_calc(angle_ave, distance_ave)
+        if movement == False:
+            movement = movement_calc(angle_ave, distance_ave)
         if movement:
             buzzer.on()
             time.sleep(5.0)
