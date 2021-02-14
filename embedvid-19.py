@@ -31,7 +31,7 @@ def get_temp():
     time.sleep(0.1)
     read_result = smbus2.i2c_msg.read(0x40,2)
     bus.i2c_rdwr(read_result)
-    Vobj_bin = int.from_bytes(read_result.buf[0]+read_result.buf[1],'big')
+    Vobj_bin = int.from_bytes(read_result.buf[0]+read_result.buf[1],'big', signed = True)
     Vobj = Vobj_bin*(0.00000015625)
     
     meas_tdie = smbus2.i2c_msg.write(0x40,[0x01])
@@ -39,25 +39,22 @@ def get_temp():
     time.sleep(0.1)
     read_result = smbus2.i2c_msg.read(0x40,2)
     bus.i2c_rdwr(read_result)
-    Tdie = ((int.from_bytes(read_result.buf[0]+read_result.buf[1],'big') / 4)*0.03125)+273.14
+    Tdie = ((int.from_bytes(read_result.buf[0]+read_result.buf[1],'big', signed = False) >> 2)/32.0)+273.14
  
-    b0 = -0.0000294
-    b1 = -0.00000057
-    b2 = 0.00000000463
+    S0 = 7e-14
+    a1 = 1.75e-3
+    a2 = -1.678e-5
     Tref = 298.15
+    b0 = -2.94e-5
+    b1 = -5.7e-7
+    b2 = 4.63e-9
     c2 = 13.4
-    S0 = 0.000000000000063
-    a1 = 0.00175
-    a2 = -0.00001678
 
-    Vos = b0 + b1*(Tdie-Tref) + b2*math.pow((Tdie-Tref),2.0)
-    print("Vos : ", Vos)
-    FVobj = (Vobj-Vos) + c2*math.pow((Vobj-Vos),2.0)
-    print("FVobj : ", FVobj)
-    S = S0*(1 + a1*(Tdie-Tref) + a2*math.pow((Tdie-Tref),2.0))
-    print("S : ", S)
-    Tobj = math.sqrt(math.sqrt(math.pow(Tdie,4.0) + (FVobj/S))) - 273.15
-    print(Tobj)
+    S = S0 * (1 + a1*(Tdie-Tref) + a2*(Tdie-Tref)**2)
+    Vos = b0 + b1*(Tdie-Tref) + b2*(Tdie-Tref)**2
+    fVobj = (Vobj-Vos) + c2*(Vobj-Vos)**2
+    Tobj = (Tdie**4 + (fVobj/S))**0.25
+    return Tobj - 273.15
 
 
 def reset():
@@ -102,7 +99,6 @@ time_scale = time.time()
 number = 1
 distance_ave = 0
 angle_ave = 0
-get_temp()
 
 while True:
     mx, my, mz = sensor_mag.magnetic
@@ -115,7 +111,7 @@ while True:
     button.when_pressed = pressed
     angle_ave, distance_ave, number = average_calculator(mx, my, mz, md, angle_ave, distance_ave, number)
     if time.time() - time_scale > 29:
-        mt = sensor_temp.temperature
+        mt = get_temp()
         movement = movement_calc(angle_ave, distance_ave)
         if movement:
             buzzer.on()
