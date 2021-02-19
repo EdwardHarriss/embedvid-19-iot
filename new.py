@@ -8,7 +8,7 @@ bus = smbus2.SMBus(1)
 i2c = busio.I2C(board.SCL, board.SDA)
 
 while True:
-	m = smbus2.i2c_msg.write(0x0c, [0x0E])
+	m = smbus2.i2c_msg.write(0x0c, [0x30])
 	bus.i2c_rdwr(m)
 	time.sleep(1.0)
 	#rm = smbus2.i2c_msg.write(0x0c, [0x40])
