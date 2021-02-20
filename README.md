@@ -30,11 +30,10 @@ When user has moved too much system will send data packets but no average distan
 
 String of Dict. 
 
-Time:
-Movement: (True if moved too much, false otherwise)
-Average Distance: (0 if movement is True)
-Temperature: (0 if movement is True)
-
+Time:<br/>
+Movement: (True if moved too much, false otherwise)<br/>
+Average Distance: (0 if movement is True)<br/>
+Temperature: (0 if movement is True)<br/>
 
 ---
 
