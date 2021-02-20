@@ -2,8 +2,11 @@
 
 ## embedvid-19.py ##
 
-Can be used on device.
-
+Before running, generate private key and certificate with:
+```
+openssl req -x509 -newkey rsa:2048 -keyout rsa_private.pem -nodes \
+    -out rsa_cert.pem -subj "/CN=unused"
+```
 ### Hardware ###
 
 Buzzer to 24 and Button to 10. Sensors as usual
