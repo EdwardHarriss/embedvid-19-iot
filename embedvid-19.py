@@ -1,7 +1,6 @@
 import board
 import busio
 import smbus2
-import adafruit_mlx90393
 import adafruit_vl53l0x
 import time
 import datetime
@@ -13,7 +12,6 @@ import math
 import paho.mqtt.client as mqtt
 
 i2c = busio.I2C(board.SCL, board.SDA)
-sensor_mag = adafruit_mlx90393.MLX90393(i2c, gain=adafruit_mlx90393.GAIN_1X)
 sensor_tof = adafruit_vl53l0x.VL53L0X(i2c)
 button = Button(10)
 buzzer = Buzzer(24)
@@ -61,11 +59,34 @@ def get_temp():
     Tobj = (Tdie**4 + (fVobj/S))**0.25
     return Tobj - 273.15
 
+def getMagValues():
+	config = [0x00, 0x5C, 0x00]
+	bus.write_i2c_block_data(0x0C, 0x60, config)
+	data = bus.read_byte(0x0C)
+	config = [0x02, 0xB4, 0x08]
+	bus.write_i2c_block_data(0x0C, 0x60, config)
+	data = bus.read_byte(0x0C) 
+	bus.write_byte(0x0C, 0x3E)
+	data = bus.read_byte(0x0C)
+	time.sleep(1)
+	data= bus.read_i2c_block_data(0x0C, 0x4E, 7)
+	#convert data  
+	xMag = data[1] * 256 + data[2]
+	yMag = data[3] * 256 + data[4]
+	zMag = data[5] * 256 + data[6]
+	if xMag > 32767 :
+		xMag -= 65536
+	if yMag > 32767 :
+		yMag -= 65536
+	if zMag > 32767 :
+		zMag -= 65536
+	return xMag, yMag, zMag
+
 
 def reset():
     global movement
     movement = False
-    mx, my, mz = sensor_mag.magnetic
+    mx, my, mz = getMagValues()
     user.set_values(mx, my, mz, sensor_tof.range)
     send_data(movement, sensor_tof.range, get_temp())
 
@@ -165,7 +186,7 @@ while True:
             presssed()
             movement = False
 
-    mx, my, mz = sensor_mag.magnetic
+    mx, my, mz = getMagValues()
     md = sensor_tof.range
     u = user.get_values()
     mx = abs(mx-u[0])
