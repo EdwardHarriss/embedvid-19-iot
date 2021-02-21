@@ -56,7 +56,7 @@ def get_temp():
     Vos = b0 + b1*(Tdie-Tref) + b2*(Tdie-Tref)**2
     fVobj = (Vobj-Vos) + c2*(Vobj-Vos)**2
     Tobj = (Tdie**4 + (fVobj/S))**0.25
-    return Tobj - 273.15
+    return Tobj - 278.15
 
 def getMagValues():
 	config = [0x00, 0x5C, 0x00]
