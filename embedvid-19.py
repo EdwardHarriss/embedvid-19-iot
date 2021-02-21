@@ -42,7 +42,7 @@ def get_temp():
     read_result = smbus2.i2c_msg.read(0x40,2)
     bus.i2c_rdwr(read_result)
     Tdie = ((int.from_bytes(read_result.buf[0]+read_result.buf[1],'big', signed = False) >> 2)/32.0)+273.14
- 
+
     S0 = 7e-14
     a1 = 1.75e-3
     a2 = -1.678e-5
@@ -56,7 +56,7 @@ def get_temp():
     Vos = b0 + b1*(Tdie-Tref) + b2*(Tdie-Tref)**2
     fVobj = (Vobj-Vos) + c2*(Vobj-Vos)**2
     Tobj = (Tdie**4 + (fVobj/S))**0.25
-    return Tobj - 278.15
+    return Tobj - 276.55
 
 def getMagValues():
 	config = [0x00, 0x5C, 0x00]
@@ -85,9 +85,11 @@ def getMagValues():
 def reset():
     global movement
     movement = False
+    global time_scale
+    time_scale = time.time()
     mx, my, mz = getMagValues()
     user.set_values(mx, my, mz, sensor_tof.range)
-    send_data(movement, sensor_tof.range, get_temp())
+    send_data(movement, sensor_tof.range, float("{:.1f}".format(get_temp())))
 
 
 def pressed():
@@ -103,21 +105,21 @@ def pressed():
         buzzer.on()
         time.sleep(0.1)
         buzzer.off()
-        global code_off
-        code_off = True
-        time.sleep(1.0)
+        send_data(True, 0,0)
+        exit()
     else:
         reset()
 
-def average_calculator(mx, my, mz, md, angle_ave, distance_ave, number):
-    angle_ave = (angle_ave/number) +  (math.sqrt(mx**2 + my**2 + mz**2)/number)
-    distance_ave = (distance_ave/number) + (md/number)
+def average_calculator(mx, my, mz, md, distance_diff, distance_change_ave, angle_ave, distance_ave, number): 
+    angle_ave = ((angle_ave*(number-1)) +  math.sqrt(mx**2 + my**2 + mz**2))/number
+    distance_change_ave = ((distance_change_ave*(number-1)) + distance_diff)/number  
+    distance_ave = ((distance_ave*(number-1)) + md)/number
     number = number + 1
-    return angle_ave, distance_ave, number
+    return angle_ave, distance_change_ave, distance_ave, number
 
 
-def movement_calc(angle_ave, distance_ave):
-    if angle_ave > 1 or distance_ave > 30:
+def movement_calc(angle_ave, distance_ave, distance_change_ave):
+    if angle_ave > 17 or distance_change_ave > 200 or distance_ave == 0 or distance_ave > 2000:
         return True
     return False
 
@@ -131,23 +133,39 @@ def create_jwt(project_id, private_key_file, algorithm):
 
     return jwt.encode(token, private_key, algorithm=algorithm)
 
+def on_connect(client, userdata, flags, rc):
+    if rc==0:
+        print("Connected OK")
+    else:
+        print("Bad connection Returned code=",rc)
+
+def on_publish(client, userdata, result):
+    print(result)
+
 def send_data(movement, distance_ave, mt):
     client_id = "projects/bubbly-realm-305414/locations/europe-west1/registries/my-registry/devices/ed_pi"
     client = mqtt.Client(client_id)
     client.username_pw_set(username="unused", password=create_jwt("bubbly-realm-305414", "rsa_private.pem", "RS256"))
     client.tls_set(ca_certs = "roots.pem",tls_version=ssl.PROTOCOL_TLSv1_2)
+
+    client.on_connect=on_connect
+    client.on_publish=on_publish
+
     error = client.connect("mqtt.googleapis.com", 8883)
-    print(error)
     if error != 0:
         return
     if movement == False:
-        data_package = { "Time": time.time(), "At Desk": movement, "Average Distance": distance_ave, "Temperature": mt }
+        data_package = { "time": int(time.time()+0.5), "away_from_desk": movement, "average_distance": int(distance_ave+0.5), "temperature": mt }
     else:
-        data_package = { "Time": time.time(), "At Desk": movement, "Average Distance": 0, "Temperature": 0}
+        data_package = { "time": int(time.time()+0.5), "away_from_desk": movement, "average_distance": 0, "temperature": 0}
     json_string = json.dumps(data_package)
+    client.loop_start()
     client.publish("/devices/ed_pi/events","Hello",qos=1)
-    time.sleep(2.0)
+    time.sleep(1.0)
     client.publish("/devices/ed_pi/events",json_string, qos=1)
+    time.sleep(1.0)
+    client.loop_stop()
+    client.disconnect()
     print("Message Sent")
 
 print("System ready")
@@ -156,21 +174,14 @@ user = User()
 time_scale = time.time()
 number = 1
 distance_ave = 0
+distance_change_ave = 0
 angle_ave = 0
 movement = False
-code_off = True
+
+button.wait_for_press()
+pressed()
 
 while True:
-
-    while code_off:
-        button.wait_for_press()
-        pressed()
-        code_off = False
-        time_scale = time.time()
-        number = 1
-        distance_ave = 0
-        angle_ave = 0
-        movement = False
     
     while movement:   #need to press button again
         if time.time() - time_scale < 30:
@@ -191,17 +202,16 @@ while True:
     mx = abs(mx-u[0])
     my = abs(my-u[1])
     mz = abs(mz-u[2])
-    md = abs(md-u[3])
+    delta_d = abs(md-u[3])
     button.when_pressed = pressed
-    angle_ave, distance_ave, number = average_calculator(mx, my, mz, md, angle_ave, distance_ave, number)
+    angle_ave, distance_change_ave, distance_ave, number = average_calculator(mx, my, mz, md, delta_d, distance_change_ave, angle_ave, distance_ave, number)
     if time.time() - time_scale > 29:
-        mt = get_temp()
-        print(angle_ave)
-        print(distance_ave)
-        movement = movement_calc(angle_ave, distance_ave)
+        mt = float("{:.1f}".format(get_temp()))
+        movement = movement_calc(angle_ave, distance_ave, distance_change_ave)
         send_data(movement, distance_ave, mt)
         angle_ave = 0
         distance_ave = 0
+        ditance_change_ave = 0
         number = 1
         time_scale = time.time()
 
