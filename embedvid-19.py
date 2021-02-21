@@ -60,10 +60,11 @@ def get_temp():
     return Tobj - 273.15
 
 def getMagValues():
+    bus = smbus2.SMBus(1)
 	config = [0x00, 0x5C, 0x00]
 	bus.write_i2c_block_data(0x0C, 0x60, config)
 	data = bus.read_byte(0x0C)
-	config = [0x02, 0xB4, 0x08]
+    config = [0x02, 0xB4, 0x08]
 	bus.write_i2c_block_data(0x0C, 0x60, config)
 	data = bus.read_byte(0x0C) 
 	bus.write_byte(0x0C, 0x3E)
