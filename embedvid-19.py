@@ -4,7 +4,10 @@ import smbus2
 import adafruit_mlx90393
 import adafruit_vl53l0x
 import time
+import datetime
 import json
+import jwt
+import ssl
 from gpiozero import Button, Buzzer
 import math
 import paho.mqtt.client as mqtt
@@ -64,6 +67,7 @@ def reset():
     movement = False
     mx, my, mz = sensor_mag.magnetic
     user.set_values(mx, my, mz, sensor_tof.range)
+    send_data(movement, sensor_tof.range, get_temp())
 
 
 def pressed():
@@ -97,9 +101,22 @@ def movement_calc(angle_ave, distance_ave):
         return True
     return False
 
+def create_jwt(project_id, private_key_file, algorithm):
+    token = {
+            "iat":datetime.datetime.utcnow(),
+            "exp":datetime.datetime.utcnow() + datetime.timedelta(minutes=20),
+            "aud":project_id,}
+    with open(private_key_file, "r") as f:
+        private_key = f.read()
+
+    return jwt.encode(token, private_key, algorithm=algorithm)
+
 def send_data(movement, distance_ave, mt):
-    client = mqtt.Client()
-    error_code = client.connect("test.mosquitto.org",port=1883)
+    client_id = "projects/bubbly-realm-305414/locations/europe-west1/registries/my-registry/devices/ed_pi"
+    client = mqtt.Client(client_id)
+    client.username_pw_set(username="unused", password=create_jwt("bubbly-realm-305414","rsa_private.pem","RS256"))
+    client.tls_set(ca_certs = "roots.pem",tls_version=ssl.PROTOCOL_TLSv1_2)       
+    error_code = client.connect("mqtt.googleapis.com", 8883)
     if error_code != 0:
         return
     if movement == False:
@@ -107,7 +124,7 @@ def send_data(movement, distance_ave, mt):
     else:
         data_package = { "Time": time.time(), "At Desk": movement, "Average Distance": 0, "Temperature": 0}
     json_string = json.dumps(data_package)
-    client.publish("IC.embedded/Embedvid-19/data",json_string)
+    client.publish("projects/bubbly-realm-305414/topics/test",json_string, qos=0)
     print("Message Sent")
 
 print("System ready")

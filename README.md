@@ -2,8 +2,11 @@
 
 ## embedvid-19.py ##
 
-Can be used on device.
-
+Before running, generate private key and certificate with:
+```
+openssl req -x509 -newkey rsa:2048 -keyout rsa_private.pem -nodes \
+    -out rsa_cert.pem -subj "/CN=unused"
+```
 ### Hardware ###
 
 Buzzer to 24 and Button to 10. Sensors as usual
@@ -30,11 +33,10 @@ When user has moved too much system will send data packets but no average distan
 
 String of Dict. 
 
-Time:
-Movement: (True if moved too much, false otherwise)
-Average Distance: (0 if movement is True)
-Temperature: (0 if movement is True)
-
+Time:<br/>
+Movement: (True if moved too much, false otherwise)<br/>
+Average Distance: (0 if movement is True)<br/>
+Temperature: (0 if movement is True)<br/>
 
 ---
 
