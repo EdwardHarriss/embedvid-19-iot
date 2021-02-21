@@ -114,17 +114,20 @@ def create_jwt(project_id, private_key_file, algorithm):
 def send_data(movement, distance_ave, mt):
     client_id = "projects/bubbly-realm-305414/locations/europe-west1/registries/my-registry/devices/ed_pi"
     client = mqtt.Client(client_id)
-    client.username_pw_set(username="unused", password=create_jwt("bubbly-realm-305414","rsa_private.pem","RS256"))
-    client.tls_set(ca_certs = "roots.pem",tls_version=ssl.PROTOCOL_TLSv1_2)       
-    error_code = client.connect("mqtt.googleapis.com", 8883)
-    if error_code != 0:
+    client.username_pw_set(username="unused", password=create_jwt("bubbly-realm-305414", "rsa_private.pem", "RS256"))
+    client.tls_set(ca_certs = "roots.pem",tls_version=ssl.PROTOCOL_TLSv1_2)
+    error = client.connect("mqtt.googleapis.com", 8883)
+    print(error)
+    if error != 0:
         return
     if movement == False:
         data_package = { "Time": time.time(), "At Desk": movement, "Average Distance": distance_ave, "Temperature": mt }
     else:
         data_package = { "Time": time.time(), "At Desk": movement, "Average Distance": 0, "Temperature": 0}
     json_string = json.dumps(data_package)
-    client.publish("projects/bubbly-realm-305414/topics/test",json_string, qos=0)
+    client.publish("/devices/ed_pi/events","Hello",qos=1)
+    time.sleep(2.0)
+    client.publish("/devices/ed_pi/events",json_string, qos=1)
     print("Message Sent")
 
 print("System ready")
