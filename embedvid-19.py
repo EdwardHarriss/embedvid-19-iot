@@ -117,7 +117,7 @@ def average_calculator(mx, my, mz, md, angle_ave, distance_ave, number):
 
 
 def movement_calc(angle_ave, distance_ave):
-    if angle_ave > 10 or distance_ave > 60:
+    if angle_ave > 1 or distance_ave > 30:
         return True
     return False
 
@@ -196,6 +196,8 @@ while True:
     angle_ave, distance_ave, number = average_calculator(mx, my, mz, md, angle_ave, distance_ave, number)
     if time.time() - time_scale > 29:
         mt = get_temp()
+        print(angle_ave)
+        print(distance_ave)
         movement = movement_calc(angle_ave, distance_ave)
         send_data(movement, distance_ave, mt)
         angle_ave = 0
