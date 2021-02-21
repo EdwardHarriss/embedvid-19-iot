@@ -15,7 +15,7 @@ i2c = busio.I2C(board.SCL, board.SDA)
 sensor_tof = adafruit_vl53l0x.VL53L0X(i2c)
 button = Button(10)
 buzzer = Buzzer(24)
-
+bus = smbus2.SMBus(1)
 
 class User:
     def set_values(self, x, y, z, d):
@@ -28,7 +28,6 @@ class User:
         return [self.x, self.y, self.z, self.d]; 
 
 def get_temp():
-    bus = smbus2.SMBus(1)
     meas_vobj = smbus2.i2c_msg.write(0x40,[0x00])
     bus.i2c_rdwr(meas_vobj)
     time.sleep(0.1)
@@ -60,11 +59,10 @@ def get_temp():
     return Tobj - 273.15
 
 def getMagValues():
-    bus = smbus2.SMBus(1)
 	config = [0x00, 0x5C, 0x00]
 	bus.write_i2c_block_data(0x0C, 0x60, config)
 	data = bus.read_byte(0x0C)
-    config = [0x02, 0xB4, 0x08]
+	config = [0x02, 0xB4, 0x08]
 	bus.write_i2c_block_data(0x0C, 0x60, config)
 	data = bus.read_byte(0x0C) 
 	bus.write_byte(0x0C, 0x3E)
