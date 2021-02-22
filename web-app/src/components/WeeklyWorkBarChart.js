@@ -7,35 +7,16 @@ import 'chartjs-plugin-deferred';
 Chart.defaults.global.defaultFontColor = '#fafafa';
 Chart.defaults.global.defaultfontFamily = "'Monserrat', sans-serif";
 
+var dta = [3, 1.5, 6, 5, 8, 2, 4]
 
 const WeeklyWorkBarChart = ({
   targetHours,
   timeData
 }) => {
 
+  //console.log(timeData)
   //Set data and target line
-  var targetLine = targetHours
-  var dta = [3, 1.5, 6, 5, 8, 2, 4]
-
-  //calculate hours and add it to the right day
-  var hoursWorkedNonRounded = (timeData[timeData.length - 1] - timeData[0])/3600
-  var hoursWorked = hoursWorkedNonRounded.toFixed(1)
-  var currentDate = new Date()
-  //var day = currentDate.getDay()
-  //dta[day] = hoursWorked
-  //var day = 2
-  //dta[day] = hoursWorked
-  //console.log(currentDate.getHours())
-  //console.log(currentDate.getMinutes())
-  //console.log(currentDate.getSeconds())
-  //push the day's data to database if end of day
-  /*if(currentDate == 12 && currentDate.getMinutes() == 10 && currentDate.getSeconds() == 55){
-    const itemsRef = firebase.database().ref('weeklyHoursData')
-    const item = {
-      day: hoursWorked,
-    }
-    itemsRef.push(item)
-  }*/
+  var targetLine = targetHours 
 
   //set bar colours
   var colours = []
@@ -59,7 +40,7 @@ const WeeklyWorkBarChart = ({
             backgroundColor: colours,
             borderColor: 'rgba(0, 0, 0, 0)',
             borderWidth: 1,
-            data: dta
+            data: dta//timeData
             }
           ]
         }}

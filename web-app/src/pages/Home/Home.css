@@ -1,0 +1,57 @@
+.container {
+  margin: 0 auto;
+  font-family: 'Monserrat', sans-serif;
+  text-align: center;
+  color: #fafafa;
+}
+
+#target-hours-dropdown {  
+  margin-top: 4em;
+  background-color: #6d78ad;
+  border-color: #98999e;
+}
+
+#dropdown-options {
+  max-height: 150px;
+  overflow-y: scroll;
+}
+
+.daily-posture-chart {
+  padding: 2em 1.5em 4em 0.8em;
+}
+
+.weekly-work-chart {
+  padding: 2em 1.5em 3em 0.8em;
+}
+
+div h3 {
+  color: #fafafa;
+  font-size: 1.4em;
+  text-align: center;
+  padding: 1.5em 0em;
+}
+
+ @media(min-width:1000px){
+  .container {
+    width: 90%;
+  }
+
+  div h3 {
+    font-size: 1.8em;
+  }
+
+  .weekly-work-chart {
+    width: 90%;
+    padding-left: 3.5em;
+  }
+}
+    
+@media(min-width:1600px){
+  .container {
+    width: 75%;
+  }
+
+  .weekly-work-chart {
+    padding-left: 8em;
+  }
+}
