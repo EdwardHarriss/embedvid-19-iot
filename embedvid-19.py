@@ -193,7 +193,7 @@ while True:
             send_data(movement, distance_ave, mt)
             time_scale = time.time()
         if button.is_pressed:
-            presssed()
+            pressed()
             movement = False
 
     mx, my, mz = getMagValues()
