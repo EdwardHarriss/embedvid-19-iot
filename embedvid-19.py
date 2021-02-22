@@ -66,8 +66,9 @@ def getMagValues():
 	bus.write_i2c_block_data(0x0C, 0x60, config)
 	data = bus.read_byte(0x0C) 
 	bus.write_byte(0x0C, 0x3E)
+	time.sleep(0.1)
 	data = bus.read_byte(0x0C)
-	time.sleep(1)
+	time.sleep(0.1)
 	data= bus.read_i2c_block_data(0x0C, 0x4E, 7)
 	#convert data  
 	xMag = data[1] * 256 + data[2]
@@ -79,6 +80,9 @@ def getMagValues():
 		yMag -= 65536
 	if zMag > 32767 :
 		zMag -= 65536
+	bus.write_byte(0x0C, 0x80)
+	time.sleep(0.1)
+	data = bus.read_byte(0x0C)
 	return xMag, yMag, zMag
 
 
