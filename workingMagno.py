@@ -30,3 +30,7 @@ while True:
 	print("Magnometer z = %d" %zMag)
 	print("\n")
 	time.sleep(1.0)
+	bus.write_byte(0x0C, 0x80)
+	time.sleep(1.0)
+	data = bus.read_byte(0x0C)
+	time.sleep(1.0)
