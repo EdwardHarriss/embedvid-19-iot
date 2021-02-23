@@ -35,7 +35,7 @@ class About extends Component {
         <ReactPlayer
           className="demo-vid"
           width="80%"
-          url="https://www.youtube.com/watch?v=gsCVpNI1cgU&feature=youtu.be&ab_channel=WorkMate"
+          url="https://www.youtube.com/watch?v=XtD7BT0j9Lg&feature=youtu.be&ab_channel=WorkMate"
         />
       </div>
     );

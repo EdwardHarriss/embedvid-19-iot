@@ -157,6 +157,7 @@ class Home extends Component {
           <div className="daily-posture-chart">
             <h3>Your Posture Today</h3>
             <DailyPostureLineChart
+              timeData={this.state.items.map((item) => {return (item.time)})}
               distanceData={this.state.items.map((item) => {return (item.distance)})}
               awayDesk={this.state.items.map((item) => {return (item.awayFromDesk)})}
             />
