@@ -26,7 +26,7 @@ const WeeklyPostureBarChart = ({
   for (let i = 0; i < timeData.length; i++) {
     let DataDate = new Date(timeData[i] * 1000)
     //don't add point if away from desk
-    if (awayDesk[i] == false){
+    if (awayDesk[i] == false && distanceData[i] < 2000){
       //Monday
       if(DataDate.getDay() == 1){
         MonDistanceSum += distanceData[i]
@@ -95,7 +95,7 @@ const WeeklyPostureBarChart = ({
                   'F', 'S', 'S'],  
           datasets: [
             {
-            label: 'Average Temp',
+            label: 'Average Posture',
             backgroundColor: colours,
             borderColor: 'rgba(0, 0, 0, 0)',
             borderWidth: 1,
