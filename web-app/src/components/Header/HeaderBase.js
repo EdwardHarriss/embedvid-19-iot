@@ -18,12 +18,12 @@ const HeaderBase = ({
             </Link>
 
             <nav>
-              <a href="" className="hide-desktop">
+              <a href="/" className="hide-desktop">
                 <img src={menu} alt="toggle menu" id="menu" className="menu"></img>
               </a>
-              <ul className="show-desktop-hide-mobile" id="nav">
+              <ul className="show-desktop hide-mobile" id="nav">
                 <li id="exit" className="exit-btn hide-desktop">
-                  <img src={exit} alt="exit menu" ></img>
+                  <img src={exit} alt="exit menu"></img>
                 </li>
                 <li><Link to="/about">About</Link></li>
                 <li><a href="/#daily">Daily</a></li>

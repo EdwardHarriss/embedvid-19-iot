@@ -7,25 +7,25 @@ Chart.defaults.global.defaultFontColor = '#fafafa';
 Chart.defaults.global.defaultFontFamily = "'Monserrat', sans-serif";
 
 const DailyPostureLineChart = ({
-    distanceVals,
+    distanceData,
     awayDesk
 }) => {
 
-    const UpperLine = 1000//100cm-1000mm
-    const LowerLine = 500//50cm-500mm
+    const UpperLine = 1000//100cm
+    const LowerLine = 500//50cm
     const MidPoint = 750
     var labels = []
-    var MaxVal = distanceVals[0]
-    for (let i = 0; i < distanceVals.length; i++) {
+    var MaxVal = distanceData[0]
+    for (let i = 0; i < distanceData.length; i++) {
         labels[i] = i*10
         //don't add point if away from desk
-        if (awayDesk[i] == false && distanceVals[i] < 2000){
-            if(distanceVals[i] > MaxVal){
-                MaxVal = distanceVals[i] 
+        if (awayDesk[i] == false && distanceData[i] < 2000){
+            if(distanceData[i] > MaxVal){
+                MaxVal = distanceData[i] 
             }         
         }
         else{
-            distanceVals[i] = null
+            distanceData[i] = null
         }
     }
    
@@ -51,7 +51,7 @@ const DailyPostureLineChart = ({
                 pointBorderColor: 'rgba(0, 0, 0, 0)',
                 pointRadius: 3,
                 borderWidth: 2,
-                data: distanceVals
+                data: distanceData
                 }
             ]
         }}

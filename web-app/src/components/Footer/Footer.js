@@ -11,16 +11,17 @@ const Footer = styled(FooterBase)`
     font-family: 'Monserrat', sans-serif;
 
     .team {
-        color: #98999e;
-        display: block;
-        padding-top: 1em;
-        text-align: center;
-        background-color: #2b3033;
-        width: 100%;
-        height: 3em;
-        ${media.desktop}{
-           height: 4em;
-        }
+      color: #98999e;
+      display: block;
+      padding-top: 1em;
+      text-align: center;
+      background-color: #2b3033;
+      width: 100%;
+      height: 3em;
+      ${media.desktop}{
+        height: 4em;
+      }
+    }
 `;
  
 

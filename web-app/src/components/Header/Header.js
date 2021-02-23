@@ -13,14 +13,14 @@ window.onload=function(){
 
   if(menu){
     menu.addEventListener('click', function(e) {
-      nav.classList.toggle('show-desktop-hide-mobile')
+      nav.classList.toggle('hide-mobile')
       e.preventDefault()
     });
   }
 
   if(exit){
     exit.addEventListener('click', function(e) {
-      nav.classList.add('show-desktop-hide-mobile')
+      nav.classList.add('hide-mobile')
       e.preventDefault()
     });
   }
@@ -29,6 +29,8 @@ window.onload=function(){
 const Header = styled(HeaderBase)`
   margin: 0 auto;
   font-family: 'Monserrat', sans-serif;
+  background-color: #2b3032;
+
 
   header {
     display: flex;
@@ -55,7 +57,7 @@ const Header = styled(HeaderBase)`
     margin: 1.5em 1em 0 0;
   } 
 
-  .show-desktop-hide-mobile {
+  .hide-mobile {
     display: none;
 
     ${media.desktop}{
@@ -121,9 +123,7 @@ const Header = styled(HeaderBase)`
 
   .exit-btn {
     margin-top: -1.3em;
-    margin-right: -10em;
     margin-bottom: 1em;
-    margin-left: -1em;
     text-align: right;
   }
   

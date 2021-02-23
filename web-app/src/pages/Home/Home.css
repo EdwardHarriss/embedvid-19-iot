@@ -45,6 +45,10 @@ h2 {
   padding: 2em 1.5em 3em 0.8em;
 }
 
+.weekly-posture-chart {
+  padding: 2em 1.5em 3em 0.8em;
+}
+
 div h3 {
   color: #fafafa;
   font-size: 1.4em;
@@ -62,7 +66,7 @@ div h3 {
   }
 
   .avg-temp {
-    padding-top: 5.2em;
+    padding-top: 5em;
   }
 
   .daily-posture-chart {
@@ -79,12 +83,42 @@ div h3 {
     font-size: 1.8em;
   }
 
+  .daily-hours {
+    margin-left: 3em;
+  }
+
   .weekly-work-chart {
     width: 90%;
     padding-left: 5.5em;
   }
 
   .weekly-temp-chart {
+    width: 90%;
+    padding-left: 5.5em;
+  }
+
+  .weekly-posture-chart {
+    width: 90%;
+    padding-left: 5.5em;
+  }
+}
+
+@media(min-width:1600px){
+   .daily-hours {
+    margin-left: 5em;
+  }
+
+  .weekly-work-chart {
+    width: 90%;
+    padding-left: 7em;
+  }
+
+  .weekly-temp-chart {
+    width: 90%;
+    padding-left: 7em;
+  }
+
+  .weekly-posture-chart {
     width: 90%;
     padding-left: 5.5em;
   }

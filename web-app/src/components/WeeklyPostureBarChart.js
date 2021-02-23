@@ -7,8 +7,8 @@ import 'chartjs-plugin-deferred';
 Chart.defaults.global.defaultFontColor = '#fafafa';
 Chart.defaults.global.defaultfontFamily = "'Monserrat', sans-serif";
 
-const WeeklyTempBarChart = ({
-  tempData,
+const WeeklyPostureBarChart = ({
+  distanceData,
   timeData,
   awayDesk
 }) => {
@@ -16,75 +16,73 @@ const WeeklyTempBarChart = ({
 
   //set empty data array
   var BarData = []
-  const UpperLine = 23
-  const LowerLine = 19
+  const UpperLine = 1000
+  const LowerLine = 500
+  const MidPoint = 750
   //Average Temperature each day
-  var MonTempSum=0, TueTempSum=0, WedTempSum=0, ThuTempSum=0, FriTempSum=0, SatTempSum=0, SunTempSum=0
+  var MonDistanceSum=0, TueDistanceSum=0, WedDistanceSum=0, ThuDistanceSum=0, FriDistanceSum=0, SatDistanceSum=0, SunDistanceSum=0
   var MonDataLength=0, TueDataLength=0, WedDataLength=0, ThuDataLength=0, FriDataLength=0, SatDataLength=0, SunDataLength=0
-  var MaxVal = tempData[0]
+  var MaxVal = distanceData[0]
   for (let i = 0; i < timeData.length; i++) {
     let DataDate = new Date(timeData[i] * 1000)
     //don't add point if away from desk
     if (awayDesk[i] == false){
       //Monday
       if(DataDate.getDay() == 1){
-        MonTempSum += tempData[i]
+        MonDistanceSum += distanceData[i]
         MonDataLength++
       }
       //Tuesday
       if(DataDate.getDay() == 2){
-        TueTempSum += tempData[i]
+        TueDistanceSum += distanceData[i]
         TueDataLength++
       }
       //Wednesday
       if(DataDate.getDay() == 3){
-        WedTempSum += tempData[i]
+        WedDistanceSum += distanceData[i]
         WedDataLength++
       }
       //Thursday
       if(DataDate.getDay() == 4){
-        ThuTempSum += tempData[i]
+        ThuDistanceSum += distanceData[i]
         ThuDataLength++
       }
       //Friday
       if(DataDate.getDay() == 5){
-        FriTempSum += tempData[i]
+        FriDistanceSum += distanceData[i]
         FriDataLength++
       }
       //Saturday
       if(DataDate.getDay() == 6){
-        SatTempSum += tempData[i]
+        SatDistanceSum += distanceData[i]
         SatDataLength++
       }
       //Sunday
       if(DataDate.getDay() == 0){
-        SunTempSum += tempData[i]
+        SunDistanceSum += distanceData[i]
         SunDataLength++
       }
       //To push up graph
-      if(tempData[i] > MaxVal){
-        MaxVal = tempData[i] 
+      if(distanceData[i] > MaxVal && distanceData[i] < 2000){
+        MaxVal = distanceData[i] 
       }
     }
   }
 
-  BarData[0] = (MonTempSum / MonDataLength).toFixed(1)
-  BarData[1] = (TueTempSum / TueDataLength).toFixed(1)
-  BarData[2] = (WedTempSum / WedDataLength).toFixed(1)
-  BarData[3] = (ThuTempSum / ThuDataLength).toFixed(1)
-  BarData[4] = (FriTempSum / FriDataLength).toFixed(1)
-  BarData[5] = (SatTempSum / SatDataLength).toFixed(1)
-  BarData[6] = (SunTempSum / SunDataLength).toFixed(1)
+  BarData[0] = (MonDistanceSum / MonDataLength).toFixed(1)
+  BarData[1] = (TueDistanceSum / TueDataLength).toFixed(1)
+  BarData[2] = (WedDistanceSum / WedDataLength).toFixed(1)
+  BarData[3] = (ThuDistanceSum / ThuDataLength).toFixed(1)
+  BarData[4] = (FriDistanceSum / FriDataLength).toFixed(1)
+  BarData[5] = (SatDistanceSum / SatDataLength).toFixed(1)
+  BarData[6] = (SunDistanceSum / SunDataLength).toFixed(1)
 
   //set bar colours
   var colours = []
   for (let i = 0; i < BarData.length; i++) {
     var colour = '#51cda0'
-    if(BarData[i] > UpperLine){
+    if(BarData[i] > UpperLine || BarData[i] < LowerLine){
       colour = '#e6214f'
-    }
-    if(BarData[i] < LowerLine){
-      colour = '#6d78ad'
     }
     colours[i] = colour
   }
@@ -120,10 +118,10 @@ const WeeklyTempBarChart = ({
                 fontSize:14,
                 fontColor:'#98999e',
                 stepSize:1,
-                beginAtZero:false,
-                stepSize: 5,
-                suggestedMin: 10,
-                suggestedMax: 24
+                beginAtZero:true,
+                stepSize: 250,
+                suggestedMin: 250,
+                suggestedMax: 1250
               }
             }],
             xAxes:[{
@@ -138,7 +136,16 @@ const WeeklyTempBarChart = ({
             }]
           },
           annotation:{
-            annotations:[{
+            annotations:[
+              {
+              borderColor:'black',
+              borderWidth:2,
+              borderDash:[10],
+              mode:'horizontal',
+              type:'line',
+              value:MidPoint,
+              scaleID:'y-axis-0'
+              }, {
               borderColor:'#6d78ad',
               borderWidth:2,
               borderDash:[10],
@@ -150,7 +157,7 @@ const WeeklyTempBarChart = ({
                   backgroundColor: "rgba(0, 0, 0, 0)",
                   fontColor: '#98999e',
                   position: 'left',
-                  content: "Too Hot",
+                  content: "Too Far",
                   enabled: true,
                   yAdjust: -10
 
@@ -166,7 +173,7 @@ const WeeklyTempBarChart = ({
                   backgroundColor: "rgba(0, 0, 0, 0)",
                   fontColor: '#98999e',
                   position: 'left',
-                  content: "Too Cold",
+                  content: "Too Close",
                   enabled: true,
                   yAdjust: 12
               }}
@@ -185,4 +192,4 @@ const WeeklyTempBarChart = ({
 }
 
 
-export default WeeklyTempBarChart
+export default WeeklyPostureBarChart

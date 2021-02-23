@@ -17,9 +17,7 @@ class App extends Component {
               <Route path="/about" exact component={() => <About/>}/>
             </Switch>
           </Router>
-        </div>
-        <div>
-          <Footer/>
+         <Footer/>
         </div>
       </div>
     );

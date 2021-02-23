@@ -6,24 +6,43 @@
   color: #fafafa;
 }
 
+h2 {
+  font-size: 2.5em;
+  margin-top: .5em;
+  padding: .2em;
+  border-top: 0.5px solid #98999e;
+  border-bottom: 0.1px solid #98999e;
+}
+
+.first-p{
+  padding-top: 2em;
+}
+
+p {
+  padding: .5em 1em;
+}
+
+h4 {
+  padding: 1em 1em;
+}
+
+
 .ad-vid {
   margin-left: 10%;
 }
 
-h5 {
-  padding: 3em 2em;
+.after-media-p{
+  padding-top: 2em;
 }
 
-p {
-  padding: 1em 1em;
+.productivity {
+  width: 85%;
+  padding: .5em;
 }
 
-.top-para {
-  margin-top: 5em;
-}
-
-.graphic {
-  width: 80%;
+.uses {
+  width: 85%;
+  padding: .5em;
 }
 
 .demo-vid {
@@ -31,7 +50,7 @@ p {
 }
 
 
- @media(min-width:1000px){
+@media(min-width:1000px){
   .container {
     width: 90%;
   }

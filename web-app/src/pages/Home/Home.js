@@ -8,6 +8,7 @@ import AvgTempCircle from '../.././components/AvgTempCircle/AvgTempCircle';
 import DailyPostureLineChart from '../.././components/DailyPostureLineChart';
 import WeeklyWorkBarChart from '../.././components/WeeklyWorkBarChart';
 import WeeklyTempBarChart from '../.././components/WeeklyTempBarChart';
+import WeeklyPostureBarChart from '../.././components/WeeklyPostureBarChart';
 import './Home.css';
 
 var now = new Date()
@@ -156,7 +157,7 @@ class Home extends Component {
           <div className="daily-posture-chart">
             <h3>Your Posture Today</h3>
             <DailyPostureLineChart
-              distanceVals={this.state.items.map((item) => {return (item.distance)})}
+              distanceData={this.state.items.map((item) => {return (item.distance)})}
               awayDesk={this.state.items.map((item) => {return (item.awayFromDesk)})}
             />
           </div>
@@ -175,6 +176,14 @@ class Home extends Component {
             <h3>Average Temperatures This Week</h3>
             <WeeklyTempBarChart
               tempData={this.state.weeklyItems.map((item) => {return (item.temp)})}
+              timeData={this.state.weeklyItems.map((item) => {return (item.time)})}
+              awayDesk={this.state.weeklyItems.map((item) => {return (item.awayFromDesk)})}
+            />
+          </div>
+          <div className="weekly-posture-chart">
+            <h3>Average Postures This Week</h3>
+            <WeeklyPostureBarChart
+              distanceData={this.state.weeklyItems.map((item) => {return (item.distance)})}
               timeData={this.state.weeklyItems.map((item) => {return (item.time)})}
               awayDesk={this.state.weeklyItems.map((item) => {return (item.awayFromDesk)})}
             />
