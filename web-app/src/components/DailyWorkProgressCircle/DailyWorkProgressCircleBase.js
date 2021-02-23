@@ -16,10 +16,29 @@ const DailyWorkProgressCircleBase = ({
     timeData,
     targetHours,
     fullRingWidth,
-    fullRingColour
+    fullRingColour,
+    awayDesk
   }) => {
-  var hoursWorkedNonRounded = (timeData[timeData.length - 1] - timeData[0])/3600 || 0
-  var hoursWorked = hoursWorkedNonRounded.toFixed(1) 
+
+  var hoursWorked = 0
+  var previousTime = timeData[0]
+  for (let i = 0; i < timeData.length; i++) {
+   //don't add point if away from desk
+    if (awayDesk[i] == false){
+      if(awayDesk[i-1] == true){
+        previousTime = timeData[i]  
+      }
+      else{
+        hoursWorked += (timeData[i]-previousTime)
+        previousTime = timeData[i]  
+      }
+    }
+  }
+  
+  hoursWorked = (hoursWorked/3600).toFixed(1) 
+   
+  //var hoursWorkedNonRounded = (timeData[timeData.length - 1] - timeData[0])/3600 || 0
+  //hoursWorked = (hoursWorkedNonRounded).toFixed(1) 
 
   var percentage = 100*(hoursWorked/targetHours)
   var reviewText = 0

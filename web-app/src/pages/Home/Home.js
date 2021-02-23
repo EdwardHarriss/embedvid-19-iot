@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
 import firebase from '../.././firebase.js';
 import Header from '../.././components/Header/Header';
-import {DropdownButton, Dropdown} from 'react-bootstrap'
+import Status from '../.././components/Status/Status';
+import {DropdownButton, Dropdown} from 'react-bootstrap';
 import DailyWorkProgressCircle from '../.././components/DailyWorkProgressCircle/DailyWorkProgressCircle';
 import AvgTempCircle from '../.././components/AvgTempCircle/AvgTempCircle';
 import DailyPostureLineChart from '../.././components/DailyPostureLineChart';
 import WeeklyWorkBarChart from '../.././components/WeeklyWorkBarChart';
-import './Home.css'
+import './Home.css';
+
+var now = new Date()
 
 class Home extends Component {
   constructor(props) {
@@ -26,13 +29,16 @@ class Home extends Component {
       let newState = [];
       for (let item in items) {
         if (items[item] != "Hello") {
-          newState.push({
-            id: item,
-            time: JSON.parse(items[item]).time,
-            temp: JSON.parse(items[item]).temperature,
-            distance: JSON.parse(items[item]).average_distance,
-            awayFromDesk: JSON.parse(items[item]).away_from_desk
-          });
+          let DataDate = new Date(JSON.parse(items[item]).time * 1000);
+          if (DataDate.getDate() == now.getDate() && DataDate.getMonth() == now.getMonth() && DataDate.getFullYear() == now.getFullYear()) {
+            newState.push({
+              id: item,
+              time: JSON.parse(items[item]).time,
+              temp: JSON.parse(items[item]).temperature,
+              distance: JSON.parse(items[item]).average_distance,
+              awayFromDesk: JSON.parse(items[item]).away_from_desk
+            });
+          }
         }
       }
       this.setState({
@@ -68,7 +74,11 @@ class Home extends Component {
     return (
       <div className="container">
         <Header page={'Home'}/>
-        <text> Device Status: off </text>
+        <Status
+          class
+          timeData={this.state.items.map((item) => {return (item.time)})}
+          awayDesk={this.state.items.map((item) => {return (item.awayFromDesk)})}
+        />
         <DropdownButton id="target-hours-dropdown" title="Set Daily Hours of Work Target">
           <div id="dropdown-options">
           <Dropdown.Item onClick={() => this.SetTargetHours(0)} href="#/target-0">0</Dropdown.Item>
@@ -120,6 +130,7 @@ class Home extends Component {
           targetHours={this.state.TargetHours}
           fullRingWidth={3}
           fullRingColour="#6d78ad"
+          awayDesk={this.state.items.map((item) => {return (item.awayFromDesk)})}
         />
         <AvgTempCircle
           className="dailyAvgTemp"

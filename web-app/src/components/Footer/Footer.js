@@ -17,7 +17,7 @@ const Footer = styled(FooterBase)`
         text-align: center;
         background-color: #2b3033;
         width: 100%;
-        height: 2.5em;
+        height: 3em;
         ${media.desktop}{
            height: 4em;
         }
