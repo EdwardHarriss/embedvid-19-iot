@@ -26,8 +26,8 @@ const HeaderBase = ({
                   <img src={exit} alt="exit menu" ></img>
                 </li>
                 <li><Link to="/about">About</Link></li>
-                <li><Link to="/">Daily</Link></li>
-                <li><Link to="/">Weekly</Link></li>
+                <li><Link to="/#daily">Daily</Link></li>
+                <li><Link to="/#weekly">Weekly</Link></li>
               </ul>
             </nav>
 

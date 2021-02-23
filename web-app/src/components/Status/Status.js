@@ -8,47 +8,35 @@ const media = {
 
 const heartbeat = keyframes`
   0%
-  {transform: font( .75 );}
+  {transform: scale(.9);}
   20%
   {transform: scale( 1 );}
   40%
-  {transform: scale( .75 );}
+  {transform: scale( .9 );}
   60%
   {transform: scale( 1 );}
   80%
-  {transform: scale( .75 );}
+  {transform: scale( .9 );}
   100%
-  {transform: scale( .75 );}
+  {transform: scale( .9 );}
 `;
 
 const Status = styled(StatusBase)`
   margin: 0 auto;
   font-family: 'Monserrat', sans-serif;
-  text-align: left;
-  padding: 5em 10em 3em 0;
-
-  .table {
-    display: table;
-    margin: 0 auto;
+  text-align: center;
+  
+  .title {
+    font-size: 1.4em;
+    padding: 4em 10em 0 0;
     ${media.desktop}{
-      text-align: center;
+      padding-right: 0;
     }
   }
 
-  ul {
-    min-width: 696px;
-	  list-style: none;
-	  padding-top: 20px;
-  }
-
-  ul li {
-		display: inline;
-	}
-
   .status {
-    font-size: 2em;
-    padding-left: .7em;
-    animation-name: ${heartbeat} 1s infinite;
+    font-size: 2.5em;
+    animation: ${heartbeat} 5s linear infinite;
     text-align: center;
   }
 `;

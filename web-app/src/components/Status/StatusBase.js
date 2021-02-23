@@ -5,36 +5,24 @@ const StatusBase = ({
   timeData,
   awayDesk
 }) => {
-
-  /*if(has been greater than 5 mins since timeData[end]){
-  display that the device is off - stop recording data?
-  }
-  */
-
-  for (let i = 0; i < awayDesk.length; i++) {
-    //don't add point if away from desk
-    if (awayDesk[i] == false){
-    }
-  }
-
+  
   var status = "At Work"
+  var clr = "#51cda0"
   const now = new Date()
   const nowInUnixSecs = Math.round(now.getTime() / 1000)
    if(awayDesk[awayDesk.length - 1] == true){
     status = "Away From Desk"
+    clr = "#e6214f"
   }
   if((nowInUnixSecs - timeData[timeData.length - 1])/60 > 5){
     status = "Off"
+    clr = "#98999e"
   }
 
   return (
     <div className={className}>
-      <div className="table">
-        <ul>
-          <li> Current Status: </li>
-          <li className="status">{status}</li>
-        </ul>
-      </div>
+      <h4 className="title"> Current Status: </h4>
+      <p className="status" style={{color: clr}}>{status}</p>
     </div>
   );
 }
