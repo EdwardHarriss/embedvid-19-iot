@@ -7,6 +7,7 @@ Chart.defaults.global.defaultFontColor = '#fafafa';
 Chart.defaults.global.defaultFontFamily = "'Monserrat', sans-serif";
 
 const DailyPostureLineChart = ({
+    timeData,
     distanceData,
     awayDesk
 }) => {
@@ -17,7 +18,9 @@ const DailyPostureLineChart = ({
     var labels = []
     var MaxVal = distanceData[0]
     for (let i = 0; i < distanceData.length; i++) {
-        labels[i] = i*10
+        var timestring = new Date(timeData[i] * 1000)
+        labels[i] = timestring.getHours().toString() + ":" + timestring.getMinutes().toString()
+         + ":" + timestring.getSeconds().toString()
         //don't add point if away from desk
         if (awayDesk[i] == false && distanceData[i] < 2000){
             if(distanceData[i] > MaxVal){
