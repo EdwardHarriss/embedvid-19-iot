@@ -11,9 +11,9 @@ const DailyPostureLineChart = ({
     awayDesk
 }) => {
 
-    var UpperLine = 1000//100cm-1000mm
-    var LowerLine = 500//50cm-500mm
-    var MidPoint = 750
+    const UpperLine = 1000//100cm-1000mm
+    const LowerLine = 500//50cm-500mm
+    const MidPoint = 750
     var labels = []
     var MaxVal = distanceVals[0]
     for (let i = 0; i < distanceVals.length; i++) {
@@ -75,7 +75,8 @@ const DailyPostureLineChart = ({
                 }],
                 xAxes:[{
                     gridLines:{
-                        zeroLineWidth:3
+                        zeroLineWidth:3,
+                        zeroLineColor:'#98999e'
                     },
                     ticks:{
                         display:false,
@@ -103,6 +104,7 @@ const DailyPostureLineChart = ({
                     scaleID:'y-axis-0',
                     label: {
                         backgroundColor: "rgba(0, 0, 0, 0)",
+                        fontColor: '#98999e',
                         position: 'left',
                         content: "Too Far",
                         enabled: true,
@@ -118,6 +120,7 @@ const DailyPostureLineChart = ({
                     scaleID:'y-axis-0',
                     label: {
                         backgroundColor: "rgba(0, 0, 0, 0)",
+                        fontColor: '#98999e',
                         position: 'left',
                         content: "Too Close",
                         enabled: true,

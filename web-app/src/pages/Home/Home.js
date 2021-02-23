@@ -7,6 +7,7 @@ import DailyWorkProgressCircle from '../.././components/DailyWorkProgressCircle/
 import AvgTempCircle from '../.././components/AvgTempCircle/AvgTempCircle';
 import DailyPostureLineChart from '../.././components/DailyPostureLineChart';
 import WeeklyWorkBarChart from '../.././components/WeeklyWorkBarChart';
+import WeeklyTempBarChart from '../.././components/WeeklyTempBarChart';
 import './Home.css';
 
 var now = new Date()
@@ -65,25 +66,6 @@ class Home extends Component {
           });
         }
       }
-      /*let weeklyItems = snapshot.val();
-      let newWeeklyState = [];
-      for (let item in weeklyItems) {
-        if (weeklyItems[item] != "Hello") {
-          let DataDate = new Date(JSON.parse(weeklyItems[item]).time * 1000);
-          if (DataDate.getWeekNumber() == now.getWeekNumber() && DataDate.getFullYear() == now.getFullYear()) {
-            newWeeklyState.push({
-              id: item,
-              time: JSON.parse(weeklyItems[item]).time,
-              temp: JSON.parse(weeklyItems[item]).temperature,
-              distance: JSON.parse(weeklyItems[item]).average_distance,
-              awayFromDesk: JSON.parse(weeklyItems[item]).away_from_desk
-            });
-            this.setState({
-              weeklyItems: newState
-            });
-          }
-        }
-      }*/
     });
   }
 
@@ -174,6 +156,14 @@ class Home extends Component {
           <h3>Hours Worked This Week</h3>
           <WeeklyWorkBarChart
             targetHours={this.state.TargetHours}
+            timeData={this.state.weeklyItems.map((item) => {return (item.time)})}
+            awayDesk={this.state.weeklyItems.map((item) => {return (item.awayFromDesk)})}
+          />
+        </div>
+        <div className="weekly-temp-chart">
+          <h3>Average Temperatures This Week</h3>
+          <WeeklyTempBarChart
+            tempData={this.state.weeklyItems.map((item) => {return (item.temp)})}
             timeData={this.state.weeklyItems.map((item) => {return (item.time)})}
             awayDesk={this.state.weeklyItems.map((item) => {return (item.awayFromDesk)})}
           />

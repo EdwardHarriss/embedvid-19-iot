@@ -13,10 +13,9 @@ const WeeklyWorkBarChart = ({
   awayDesk
 }) => {
 
-  //Set data and target line
+  //set target line and empty data array
   var targetLine = targetHours
-  const now = new Date()
-  var dta = []
+  var BarData = []
   //Total Hours worked each day
   var MonHours=0, TueHours=0, WedHours=0, ThuHours=0, FriHours=0, SatHours=0, SunHours=0
   var previousTime=timeData[0]
@@ -32,7 +31,7 @@ const WeeklyWorkBarChart = ({
           previousTime = timeData[i]  
         }
       }
-      dta[0] = (MonHours/3600).toFixed(1)
+      BarData[0] = (MonHours/3600).toFixed(1)
     }
     if(DataDate.getDay() == 2){
       if (awayDesk[i] == false){
@@ -44,7 +43,7 @@ const WeeklyWorkBarChart = ({
           previousTime = timeData[i]  
         }
       }
-      dta[1] = (TueHours/3600).toFixed(1)
+      BarData[1] = (TueHours/3600).toFixed(1)
     }
     if(DataDate.getDay() == 3){
       if (awayDesk[i] == false){
@@ -56,7 +55,7 @@ const WeeklyWorkBarChart = ({
           previousTime = timeData[i]  
         }
       }
-      dta[2] = (WedHours/3600).toFixed(1)
+      BarData[2] = (WedHours/3600).toFixed(1)
     }
     if(DataDate.getDay() == 4){
       if (awayDesk[i] == false){
@@ -68,7 +67,7 @@ const WeeklyWorkBarChart = ({
           previousTime = timeData[i]  
         }
       }
-      dta[3] = (ThuHours/3600).toFixed(1)
+      BarData[3] = (ThuHours/3600).toFixed(1)
     }
     //Friday
     if(DataDate.getDay() == 5){
@@ -81,7 +80,7 @@ const WeeklyWorkBarChart = ({
           previousTime = timeData[i]  
         }
       }
-      dta[4] = (FriHours/3600).toFixed(1)
+      BarData[4] = (FriHours/3600).toFixed(1)
     }
     //Saturday
     if(DataDate.getDay() == 6){
@@ -94,7 +93,7 @@ const WeeklyWorkBarChart = ({
           previousTime = timeData[i]  
         }
       }
-      dta[5] = (SatHours/3600).toFixed(1)
+      BarData[5] = (SatHours/3600).toFixed(1)
     }
     //Sunday
     if(DataDate.getDay() == 0){
@@ -107,15 +106,15 @@ const WeeklyWorkBarChart = ({
           previousTime = timeData[i]  
         }
       }
-      dta[6] = (SunHours/3600).toFixed(1)
+      BarData[6] = (SunHours/3600).toFixed(1)
     }
   }
 
   //set bar colours
   var colours = []
-  for (let i = 0; i < dta.length; i++) {
+  for (let i = 0; i < BarData.length; i++) {
     var colour = '#6d78ad'
-    if(dta[i] >= targetLine){
+    if(BarData[i] >= targetLine){
       colour = '#51cda0'
     }
     colours[i] = colour
@@ -133,7 +132,7 @@ const WeeklyWorkBarChart = ({
             backgroundColor: colours,
             borderColor: 'rgba(0, 0, 0, 0)',
             borderWidth: 1,
-            data: dta//timeData
+            data: BarData
             }
           ]
         }}
@@ -145,7 +144,8 @@ const WeeklyWorkBarChart = ({
           scales:{
             yAxes:[{
               gridLines:{
-                zeroLineWidth:3
+                zeroLineWidth:3,
+                zeroLineColor:'#98999e'
               },
               ticks:{
                 fontSize:14,
@@ -156,7 +156,8 @@ const WeeklyWorkBarChart = ({
             }],
             xAxes:[{
               gridLines:{
-                zeroLineWidth:3
+                zeroLineWidth:3,
+                zeroLineColor:'#98999e'
               },
               ticks:{
                 fontSize:14,

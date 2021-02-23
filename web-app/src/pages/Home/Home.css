@@ -24,6 +24,10 @@
   padding: 2em 1.5em 3em 0.8em;
 }
 
+.weekly-temp-chart {
+  padding: 2em 1.5em 3em 0.8em;
+}
+
 div h3 {
   color: #fafafa;
   font-size: 1.4em;
@@ -44,14 +48,9 @@ div h3 {
     width: 90%;
     padding-left: 3.5em;
   }
-}
-    
-@media(min-width:1600px){
-  .container {
-    width: 75%;
-  }
 
-  .weekly-work-chart {
-    padding-left: 8em;
+  .weekly-temp-chart {
+    width: 90%;
+    padding-left: 3.5em;
   }
 }

@@ -19,23 +19,24 @@ const AvgTempCircleBase = ({
 }) => {
 
   var sum = 0
-
+  var datalength = 0
   for (let i = 0; i < tempData.length; i++) {
     //don't add point if away from desk
     if (awayDesk[i] == false){
       sum += tempData[i]
+      datalength++
     }
   }
 
-  var avgTempNonRounded = (sum / tempData.length) || 0;
+  var avgTempNonRounded = (sum / datalength) || 0;
   var avgTemp = avgTempNonRounded.toFixed(1)
   
   var reviewText = "Your work environment is "
   if (avgTemp > 23) {
       reviewText += (avgTemp - 23).toFixed(1) + "\xB0 above the optimum temperature, try and cool it down!"
       fullRingColour = "#e6214f"
-  } else if (avgTemp < 20) {
-      reviewText += (20 - avgTemp).toFixed(1) + "\xB0 below the optimum temperature, try and warm it up!"
+  } else if (avgTemp < 19) {
+      reviewText += (19 - avgTemp).toFixed(1) + "\xB0 below the optimum temperature, try and warm it up!"
       fullRingColour = "#6d78ad"
   } else {
       reviewText += " at the optimum temperature, nice!"
