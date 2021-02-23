@@ -10,7 +10,7 @@ const media = {
 
 const AvgTempCircle = styled(AvgTempCircleBase)`
   margin: 0 auto;
-  padding: 4em;
+  padding: 2em 4em 4em 4em;
 
   svg {
     height: 15em;
@@ -41,7 +41,7 @@ const AvgTempCircle = styled(AvgTempCircleBase)`
       padding: 0 1.5em;
     }
     ${media.tablet}{
-      padding: 0 1.5em;
+      padding-top: 1.5em;
     }
   }
 `;

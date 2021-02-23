@@ -23,19 +23,22 @@ const heartbeat = keyframes`
 
 const Status = styled(StatusBase)`
   margin: 0 auto;
+  padding: 3em 0 5em 0;
   font-family: 'Monserrat', sans-serif;
   text-align: center;
+
+  ${media.largedesktop}{
+    padding: 4em 0;
+  }
   
   .title {
     font-size: 1.4em;
-    padding: 4em 10em 0 0;
-    ${media.desktop}{
-      padding-right: 0;
-    }
+    padding-top: 5em;
   }
 
   .status {
-    font-size: 2.5em;
+    font-size: 3.7em;
+    padding-top: .2em;
     animation: ${heartbeat} 5s linear infinite;
     text-align: center;
   }
