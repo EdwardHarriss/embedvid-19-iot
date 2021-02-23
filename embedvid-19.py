@@ -28,10 +28,7 @@ class User:
         return [self.x, self.y, self.z, self.d]; 
 
 def temp_initialise():
-    bus.write_i2c_block_data(0x40,0x02,0x8000)
-
-def mag_initialise():
-
+    bus.write_byte_data(0x40, 0x02, 0x7900)
 
 def temp_avaliable():
     meas_aval = smbus2.i2c_msg.write(0x40,[0x02])
@@ -40,7 +37,7 @@ def temp_avaliable():
     read_result = smbus2.i2c_msg.read(0x40,2)
     bus.i2c_rdwr(read_result)
     aval = int.from_bytes(read_result.buf[0]+read_result.buf[1],'big',signed = False)
-    if aval & 0x7000 and aval & 0x80:
+    if (aval & 0x7000 != 0) and (aval & 0x80 != 0):
         return True
     return False    
 
