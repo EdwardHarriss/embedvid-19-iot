@@ -27,7 +27,29 @@ class User:
     def get_values(self):
         return [self.x, self.y, self.z, self.d]; 
 
+def temp_initialise():
+    bus.write_i2c_block_data(0x40,0x02,0x8000)
+
+def mag_initialise():
+
+
+def temp_avaliable():
+    meas_aval = smbus2.i2c_msg.write(0x40,[0x02])
+    bus.i2c_rdwr(meas_aval)
+    time.sleep(0.1)
+    read_result = smbus2.i2c_msg.read(0x40,2)
+    bus.i2c_rdwr(read_result)
+    aval = int.from_bytes(read_result.buf[0]+read_result.buf[1],'big',signed = False)
+    if aval & 0x7000 and aval & 0x80:
+        return True
+    return False    
+
 def get_temp():
+    try:
+        temp_avaliable() == True
+    except:
+        return get_temp()
+
     meas_vobj = smbus2.i2c_msg.write(0x40,[0x00])
     bus.i2c_rdwr(meas_vobj)
     time.sleep(0.1)
@@ -172,6 +194,8 @@ def send_data(movement, distance_ave, mt):
     client.disconnect()
     print("Message Sent")
 
+temp_initialise()
+
 print("System ready")
 user = User()
 
@@ -181,7 +205,6 @@ distance_ave = 0
 distance_change_ave = 0
 angle_ave = 0
 movement = False
-
 button.wait_for_press()
 pressed()
 
