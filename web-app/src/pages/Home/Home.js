@@ -11,6 +11,16 @@ import './Home.css';
 
 var now = new Date()
 
+
+Date.prototype.getWeekNumber = function(){
+  var d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate()));
+  var dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1)/7)
+};
+
+
 class Home extends Component {
   constructor(props) {
     super(props)
@@ -18,7 +28,7 @@ class Home extends Component {
     this.state = {
       TargetHours: localStorage.getItem('TargetHours') || 0,
       items: [],
-      WeeklyHoursData: localStorage.getItem('WeeklyHoursData') || []
+      weeklyItems: []
     }
   }
 
@@ -27,6 +37,7 @@ class Home extends Component {
     itemsRef.on('value', (snapshot) => {
       let items = snapshot.val();
       let newState = [];
+      let newWeeklyState = [];
       for (let item in items) {
         if (items[item] != "Hello") {
           let DataDate = new Date(JSON.parse(items[item]).time * 1000);
@@ -39,35 +50,46 @@ class Home extends Component {
               awayFromDesk: JSON.parse(items[item]).away_from_desk
             });
           }
+          if (DataDate.getWeekNumber() == now.getWeekNumber() && DataDate.getFullYear() == now.getFullYear()) {
+            newWeeklyState.push({
+              id: item,
+              time: JSON.parse(items[item]).time,
+              temp: JSON.parse(items[item]).temperature,
+              distance: JSON.parse(items[item]).average_distance,
+              awayFromDesk: JSON.parse(items[item]).away_from_desk
+            });
+          }
+          this.setState({
+            items: newState,
+            weeklyItems: newWeeklyState
+          });
         }
       }
-      this.setState({
-        items: newState
-      });
+      /*let weeklyItems = snapshot.val();
+      let newWeeklyState = [];
+      for (let item in weeklyItems) {
+        if (weeklyItems[item] != "Hello") {
+          let DataDate = new Date(JSON.parse(weeklyItems[item]).time * 1000);
+          if (DataDate.getWeekNumber() == now.getWeekNumber() && DataDate.getFullYear() == now.getFullYear()) {
+            newWeeklyState.push({
+              id: item,
+              time: JSON.parse(weeklyItems[item]).time,
+              temp: JSON.parse(weeklyItems[item]).temperature,
+              distance: JSON.parse(weeklyItems[item]).average_distance,
+              awayFromDesk: JSON.parse(weeklyItems[item]).away_from_desk
+            });
+            this.setState({
+              weeklyItems: newState
+            });
+          }
+        }
+      }*/
     });
   }
 
   SetTargetHours = (hrs) => {
     localStorage.setItem('TargetHours', hrs);
     this.setState({TargetHours: hrs})
-  }
-
-  SetWeeklyHours = () => {
-    let HoursArray = []
-    var currentDate = new Date()
-    var day = currentDate.getDay()
-    console.log(day)
-    var timeData = this.state.items.map((item) => {return (item.time)})
-    var hoursWorkedNonRounded = (timeData[timeData.length - 1] - timeData[0])/3600
-    var hoursWorked = hoursWorkedNonRounded.toFixed(1)
-    for (let days in this.state.WeeklyHoursData) {
-      if(days == day){
-        HoursArray.push({hoursWorked});
-      }
-    }
-    this.setState({
-      WeeklyHoursData: HoursArray
-    });
   }
 
   render () {
@@ -152,7 +174,8 @@ class Home extends Component {
           <h3>Hours Worked This Week</h3>
           <WeeklyWorkBarChart
             targetHours={this.state.TargetHours}
-            timeData={this.state.WeeklyHoursData}
+            timeData={this.state.weeklyItems.map((item) => {return (item.time)})}
+            awayDesk={this.state.weeklyItems.map((item) => {return (item.awayFromDesk)})}
           />
         </div>
       </div>

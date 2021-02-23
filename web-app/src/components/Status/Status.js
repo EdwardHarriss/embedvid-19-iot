@@ -30,6 +30,9 @@ const Status = styled(StatusBase)`
   .table {
     display: table;
     margin: 0 auto;
+    ${media.desktop}{
+      text-align: center;
+    }
   }
 
   ul {
@@ -44,8 +47,9 @@ const Status = styled(StatusBase)`
 
   .status {
     font-size: 2em;
-    padding-left: 2em;
+    padding-left: .7em;
     animation-name: ${heartbeat} 1s infinite;
+    text-align: center;
   }
 `;
 

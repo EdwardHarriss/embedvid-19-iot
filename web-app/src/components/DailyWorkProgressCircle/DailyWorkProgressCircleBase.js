@@ -36,9 +36,6 @@ const DailyWorkProgressCircleBase = ({
   }
   
   hoursWorked = (hoursWorked/3600).toFixed(1) 
-   
-  //var hoursWorkedNonRounded = (timeData[timeData.length - 1] - timeData[0])/3600 || 0
-  //hoursWorked = (hoursWorkedNonRounded).toFixed(1) 
 
   var percentage = 100*(hoursWorked/targetHours)
   var reviewText = 0

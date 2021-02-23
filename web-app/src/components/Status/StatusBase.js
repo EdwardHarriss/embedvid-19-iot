@@ -17,21 +17,21 @@ const StatusBase = ({
     }
   }
 
-  var status = "Off"
+  var status = "At Work"
   const now = new Date()
   const nowInUnixSecs = Math.round(now.getTime() / 1000)
    if(awayDesk[awayDesk.length - 1] == true){
     status = "Away From Desk"
   }
-  else if((nowInUnixSecs - timeData[timeData.length - 1])/60 < 5){
-    status = "At Work"
+  if((nowInUnixSecs - timeData[timeData.length - 1])/60 > 5){
+    status = "Off"
   }
 
   return (
     <div className={className}>
       <div className="table">
         <ul>
-          <li> Current Status:</li>
+          <li> Current Status: </li>
           <li className="status">{status}</li>
         </ul>
       </div>

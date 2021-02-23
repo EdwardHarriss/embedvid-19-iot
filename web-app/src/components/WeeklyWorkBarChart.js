@@ -7,16 +7,109 @@ import 'chartjs-plugin-deferred';
 Chart.defaults.global.defaultFontColor = '#fafafa';
 Chart.defaults.global.defaultfontFamily = "'Monserrat', sans-serif";
 
-var dta = [3, 1.5, 6, 5, 8, 2, 4]
-
 const WeeklyWorkBarChart = ({
   targetHours,
-  timeData
+  timeData,
+  awayDesk
 }) => {
 
-  //console.log(timeData)
   //Set data and target line
-  var targetLine = targetHours 
+  var targetLine = targetHours
+  const now = new Date()
+  var dta = []
+  //Total Hours worked each day
+  var MonHours=0, TueHours=0, WedHours=0, ThuHours=0, FriHours=0, SatHours=0, SunHours=0
+  var previousTime=timeData[0]
+  for (let i = 0; i < timeData.length; i++) {
+    let DataDate = new Date(timeData[i] * 1000)
+    if(DataDate.getDay() == 1){
+      if (awayDesk[i] == false){
+        if(awayDesk[i-1] == true){
+          previousTime = timeData[i]  
+        }
+        else{
+          MonHours += (timeData[i]-previousTime)
+          previousTime = timeData[i]  
+        }
+      }
+      dta[0] = (MonHours/3600).toFixed(1)
+    }
+    if(DataDate.getDay() == 2){
+      if (awayDesk[i] == false){
+        if(awayDesk[i-1] == true){
+          previousTime = timeData[i]  
+        }
+        else{
+          TueHours += (timeData[i]-previousTime)
+          previousTime = timeData[i]  
+        }
+      }
+      dta[1] = (TueHours/3600).toFixed(1)
+    }
+    if(DataDate.getDay() == 3){
+      if (awayDesk[i] == false){
+        if(awayDesk[i-1] == true){
+          previousTime = timeData[i]  
+        }
+        else{
+          WedHours += (timeData[i]-previousTime)
+          previousTime = timeData[i]  
+        }
+      }
+      dta[2] = (WedHours/3600).toFixed(1)
+    }
+    if(DataDate.getDay() == 4){
+      if (awayDesk[i] == false){
+        if(awayDesk[i-1] == true){
+          previousTime = timeData[i]  
+        }
+        else{
+          ThuHours += (timeData[i]-previousTime)
+          previousTime = timeData[i]  
+        }
+      }
+      dta[3] = (ThuHours/3600).toFixed(1)
+    }
+    //Friday
+    if(DataDate.getDay() == 5){
+      if (awayDesk[i] == false){
+        if(awayDesk[i-1] == true){
+          previousTime = timeData[i]  
+        }
+        else{
+          FriHours += (timeData[i]-previousTime)
+          previousTime = timeData[i]  
+        }
+      }
+      dta[4] = (FriHours/3600).toFixed(1)
+    }
+    //Saturday
+    if(DataDate.getDay() == 6){
+      if (awayDesk[i] == false){
+        if(awayDesk[i-1] == true){
+          previousTime = timeData[i]  
+        }
+        else{
+          SatHours += (timeData[i]-previousTime)
+          previousTime = timeData[i]  
+        }
+      }
+      dta[5] = (SatHours/3600).toFixed(1)
+    }
+    //Sunday
+    if(DataDate.getDay() == 0){
+      if (awayDesk[i] == false){
+        if(awayDesk[i-1] == true){
+          previousTime = timeData[i]  
+        }
+        else{
+          SunHours += (timeData[i]-previousTime)
+          previousTime = timeData[i]  
+        }
+      }
+      dta[6] = (SunHours/3600).toFixed(1)
+    }
+  }
 
   //set bar colours
   var colours = []

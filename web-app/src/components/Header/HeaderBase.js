@@ -26,8 +26,8 @@ const HeaderBase = ({
                   <img src={exit} alt="exit menu" ></img>
                 </li>
                 <li><Link to="/about">About</Link></li>
-                <li><a href="">Daily</a></li>
-                <li><a href="">Weekly</a></li>
+                <li><Link to="/">Daily</Link></li>
+                <li><Link to="/">Weekly</Link></li>
               </ul>
             </nav>
 
@@ -54,8 +54,8 @@ const HeaderBase = ({
                   <img src={exit} alt="exit menu" ></img>
                 </li>
                 <li><Link to="/">Home</Link></li>
-                <li><a href="">Daily</a></li>
-                <li><a href="">Weekly</a></li>
+                <li><Link to="/">Daily</Link></li>
+                <li><Link to="/">Weekly</Link></li>
               </ul>
             </nav>
 

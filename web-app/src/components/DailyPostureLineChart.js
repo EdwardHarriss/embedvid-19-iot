@@ -49,7 +49,7 @@ const DailyPostureLineChart = ({
                         '#51cda0';
                 },
                 pointBorderColor: 'rgba(0, 0, 0, 0)',
-                pointRadius: 5,
+                pointRadius: 3,
                 borderWidth: 2,
                 data: distanceVals
                 }
