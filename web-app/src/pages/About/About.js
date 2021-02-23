@@ -10,7 +10,7 @@ class About extends Component {
       <div className="container">
         <Header page={'About'}/>
         <h5>From the embedvid-19 team, we are proud to present to you, WorkMate!</h5>
-        <ReactPlayer 
+        <ReactPlayer
           className="ad-vid"
           width="80%"
           url="https://www.youtube.com/watch?v=gsCVpNI1cgU&feature=youtu.be&ab_channel=WorkMate"
@@ -20,9 +20,8 @@ class About extends Component {
         <img src={graphic} alt="productivity graphic" id="graphic" className="graphic"></img>
         <p>Not only does the device track time spent at your desk, but also your posture and room temperature, giving you the power to set up the optimal work environment.</p>
         <p>You can view all of this handy data on the website!</p>
-        <p>WorkMate is a device built to help you succeed. WorkMate targets your working environment so you can work at 100%, 100% of the time.</p>
         <h3>How To Use</h3>
-        <ReactPlayer 
+        <ReactPlayer
           className="demo-vid"
           width="80%"
           url="https://www.youtube.com/watch?v=gsCVpNI1cgU&feature=youtu.be&ab_channel=WorkMate"
