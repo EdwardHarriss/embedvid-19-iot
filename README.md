@@ -2,10 +2,9 @@
 
 ## embedvid-19.py ##
 
-Before running, generate private key and certificate with:
+Before running, downlaod jwt and https://www.adafruit.com/product/3317
 ```
-openssl req -x509 -newkey rsa:2048 -keyout rsa_private.pem -nodes \
-    -out rsa_cert.pem -subj "/CN=unused"
+sudo pip3 install pyjwt
 ```
 ### Hardware ###
 
@@ -15,18 +14,17 @@ Buzzer to 24 and Button to 10. Sensors as usual
 
 System will print 'System ready'. Press button once to start, will feel buz. 
 To turn off system, hold button, will feel one buz followed after 2 seconds by 2 short buzzes.
-To turn system back on press button, will feel buz.
 
 ### Tracking ###
 
 System will track average angle difference and distance difference over 30s. If too much, will buz for 3s on 3s off over and over.
 To reset press button, will feel buz.
 
-Around 30s will send data packet to test.mosquitto.org port 1883, no encryption yet!!!!!!!!!!!!!
+Around 30s will send data packet to website
 
-If system in 'off state' no data sent!
+When system is turning off will send away from desk final packet
 
-When user has moved too much system will send data packets but no average distance or temperatur
+When user has moved too much system will send data packets but no average distance or temperature
 
 
 ### Data Packets ###
@@ -42,7 +40,5 @@ Temperature: (0 if movement is True)<br/>
 
 ### To do ###
 
-- Create magneometer function
-- Might have to create TOF function
-- Sort out correct data sending and encryption (Tyler permitting)
+- Improve Magneometer
 
