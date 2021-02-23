@@ -1,16 +1,35 @@
 .container {
   margin: 0 auto;
+  padding: 0;
   font-family: 'Monserrat', sans-serif;
   text-align: center;
   color: #fafafa;
 }
 
-div h3 {
-  color: #fafafa;
-  font-size: 1.4em;
-  text-align: center;
-  padding: 1.5em 0em;
+.ad-vid {
+  margin-left: 10%;
 }
+
+h5 {
+  padding: 3em 2em;
+}
+
+p {
+  padding: 1em 1em;
+}
+
+.top-para {
+  margin-top: 5em;
+}
+
+.graphic {
+  width: 80%;
+}
+
+.demo-vid {
+  margin-left: 10%;
+}
+
 
  @media(min-width:1000px){
   .container {
