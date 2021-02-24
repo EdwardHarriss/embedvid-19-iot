@@ -108,11 +108,16 @@ def get_mag():
 	bus.write_i2c_block_data(0x0C, 0x60, config)
 	time.sleep(0.1)
 	data = bus.read_byte(0x0C)
-
-	bus.write_byte(0x0C, 0x3E)
-	#0x3E: (Z, Y, X, Temp bits set to 1110, so Temp isn't measured)
-	time.sleep(0.1)
-	data = bus.read_byte(0x0C)
+	try:
+		bus.write_byte(0x0C, 0x3E)
+		#0x3E: (Z, Y, X, Temp bits set to 1110, so Temp isn't measured)
+		time.sleep(0.2)
+		data = bus.read_byte(0x0C)
+	except:
+		time.sleep(2)
+		bus.write_byte(0x0C, 0x3E)
+		time.sleep(0.2)
+		data = bus.read_byte(0x0C)
 
 
 	data= bus.read_i2c_block_data(0x0C, 0x4E, 7)
@@ -255,6 +260,7 @@ while True:
     delta_d = abs(md-u[3])
     button.when_pressed = pressed
     angle_ave, distance_change_ave, distance_ave, number = average_calculator(mx, my, mz, md, delta_d, distance_change_ave, angle_ave, distance_ave, number)
+    print("Angle Ave: ", angle_ave, " Distance Change Ave: ", distance_change_ave)
     if time.time() - time_scale > 29:
         mt = float("{:.1f}".format(get_temp()))
         movement = movement_calc(angle_ave, distance_ave, distance_change_ave)
