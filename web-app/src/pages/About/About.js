@@ -19,6 +19,7 @@ class About extends Component {
         <ReactPlayer
           className="ad-vid"
           width="80%"
+          controls="true"
           url="https://www.youtube.com/watch?v=gsCVpNI1cgU&feature=youtu.be&ab_channel=WorkMate"
         />
         <p className="after-media-p">Now you can get even more satisfaction out of knowing you've hit your targets for the day, and a <i>little</i> push to help you if you haven't!</p>
@@ -35,6 +36,7 @@ class About extends Component {
         <ReactPlayer
           className="demo-vid"
           width="80%"
+          controls="true"
           url="https://www.youtube.com/watch?v=XtD7BT0j9Lg&feature=youtu.be&ab_channel=WorkMate"
         />
       </div>

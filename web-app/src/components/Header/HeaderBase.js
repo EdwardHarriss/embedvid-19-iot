@@ -49,7 +49,7 @@ const HeaderBase = ({
               <a href="" className="hide-desktop">
                 <img src={menu} alt="toggle menu" id="menu" className="menu"></img>
               </a>
-              <ul className="show-desktop-hide-mobile" id="nav">
+              <ul className="show-desktop hide-mobile" id="nav">
                 <li id="exit" className="exit-btn hide-desktop">
                   <img src={exit} alt="exit menu" ></img>
                 </li>
