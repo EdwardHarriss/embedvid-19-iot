@@ -168,7 +168,7 @@ def average_calculator(mx, my, mz, md, distance_diff, distance_change_ave, angle
 
 
 def movement_calc(angle_ave, distance_ave, distance_change_ave):
-    if angle_ave > 17 or distance_change_ave > 200 or distance_ave == 0 or distance_ave > 2000:
+    if angle_ave > 17 or distance_change_ave > 400 or distance_ave == 0 or distance_ave > 2000:
         return True
     return False
 
