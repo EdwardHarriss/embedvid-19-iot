@@ -91,17 +91,16 @@ def mag_available():
 	if (status & 0x10 == 0 ):
 		#error bit
 		return True
-	return False
+	else:
+		return False
 
 def get_mag():
 	try:
 		mag_available() == True
 	except:
-		#if this doesn't work I'll put a reset command here
 		bus.write_byte(0x0C, 0xF0)
 		#reset command
 		time.sleep(0.1)
-		mag_initialise()
 		return get_mag()
 
 	config = [0x02, 0xB4, 0x08]
@@ -137,7 +136,7 @@ def reset():
     movement = False
     global time_scale
     time_scale = time.time()
-    mx, my, mz = getMagValues()
+    mx, my, mz = get_mag()
     user.set_values(mx, my, mz, sensor_tof.range)
     send_data(movement, sensor_tof.range, float("{:.1f}".format(get_temp())))
 
@@ -247,7 +246,7 @@ while True:
             pressed()
             movement = False
 
-    mx, my, mz = getMagValues()
+    mx, my, mz = get_mag()
     md = sensor_tof.range
     u = user.get_values()
     mx = abs(mx-u[0])
