@@ -77,19 +77,48 @@ def get_temp():
     Tobj = (Tdie**4 + (fVobj/S))**0.25
     return Tobj - 276.55
 
-def getMagValues():
+def mag_available():
 	config = [0x00, 0x5C, 0x00]
 	bus.write_i2c_block_data(0x0C, 0x60, config)
-	data = bus.read_byte(0x0C)
+	#Reg Addr, Data Low, Data High
+	time.sleep(0.1)
+	#0x0C specifies device address
+	# write register command is 0x60
+	status = bus.read_byte(0x0C)
+	#reads status byte
+	#print(status)
+
+	if (status & 0x10 == 0 ):
+		#error bit
+		return True
+	return False
+
+def get_mag():
+	try:
+		mag_available() == True
+	except:
+		#if this doesn't work I'll put a reset command here
+		bus.write_byte(0x0C, 0xF0)
+		#reset command
+		time.sleep(0.1)
+		mag_initialise()
+		return get_mag()
+
 	config = [0x02, 0xB4, 0x08]
+	#change reg addr
 	bus.write_i2c_block_data(0x0C, 0x60, config)
-	data = bus.read_byte(0x0C) 
-	bus.write_byte(0x0C, 0x3E)
 	time.sleep(0.1)
 	data = bus.read_byte(0x0C)
+
+	bus.write_byte(0x0C, 0x3E)
+	#0x3E: (Z, Y, X, Temp bits set to 1110, so Temp isn't measured)
 	time.sleep(0.1)
+	data = bus.read_byte(0x0C)
+
+
 	data= bus.read_i2c_block_data(0x0C, 0x4E, 7)
-	#convert data  
+
+	#convert data
 	xMag = data[1] * 256 + data[2]
 	yMag = data[3] * 256 + data[4]
 	zMag = data[5] * 256 + data[6]
@@ -98,10 +127,8 @@ def getMagValues():
 	if yMag > 32767 :
 		yMag -= 65536
 	if zMag > 32767 :
-		zMag -= 65536
-	bus.write_byte(0x0C, 0x80)
-	time.sleep(0.1)
-	data = bus.read_byte(0x0C)
+		zMag -=65536
+
 	return xMag, yMag, zMag
 
 
