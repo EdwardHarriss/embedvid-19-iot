@@ -36,9 +36,4 @@ Movement: (True if moved too much, false otherwise)<br/>
 Average Distance: (0 if movement is True)<br/>
 Temperature: (0 if movement is True)<br/>
 
----
-
-### To do ###
-
-- Improve Magneometer
 
