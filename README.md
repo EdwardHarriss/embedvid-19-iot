@@ -2,7 +2,7 @@
 
 ## embedvid-19.py ##
 
-Before running, downlaod jwt and https://www.adafruit.com/product/3317
+Before running, downlaod pyjwt and https://www.adafruit.com/product/3317
 ```
 sudo pip3 install pyjwt
 ```
