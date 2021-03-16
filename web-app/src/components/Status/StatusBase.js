@@ -10,7 +10,7 @@ const StatusBase = ({
   var clr = "#98999e"
   const now = new Date()
   const nowInUnixSecs = Math.round(now.getTime() / 1000)
-  if((nowInUnixSecs - timeData[timeData.length - 1])/60 > 5){
+  if((nowInUnixSecs - timeData[timeData.length - 1])/60 > 5 || timeData.length == 0){
     status = "Off"
     clr = "#98999e"
   }
