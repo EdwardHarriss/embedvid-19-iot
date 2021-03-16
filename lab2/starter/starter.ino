@@ -1,65 +1,64 @@
-
 #include <U8g2lib.h>
 #include <Wire.h>
 #include <STM32FreeRTOS.h>
 #include <math.h>
 #include <string.h>
 
-class knob{
+class knob {
   private:
     uint8_t knobposition;
     uint8_t knobpreviousvalue;
     uint8_t upper_limit;
     uint8_t lower_limit;
   public:
-    knob(){
+    knob() {
       knobposition = 0;
       upper_limit = 16;
       lower_limit = 0;
     }
 
-    uint8_t get_knob_position(){
+    uint8_t get_knob_position() {
       return knobposition;
     }
 
-    uint8_t get_previous_value(){
+    uint8_t get_previous_value() {
       return knobpreviousvalue;
     }
 
-    void set_previous_position(uint8_t new_prev){
+    void set_previous_position(uint8_t new_prev) {
       knobpreviousvalue = new_prev;
     }
 
-    void knobdecoder(uint8_t localCurrentKnob_3){
+    void knobdecoder(uint8_t localCurrentKnob_3) {
       int8_t rotation = 0;
-      if((knobpreviousvalue == 0x0) && (localCurrentKnob_3 == 0x1)){
+      if ((knobpreviousvalue == 0x0) && (localCurrentKnob_3 == 0x1)) {
         rotation = 1;
       }
-      if((knobpreviousvalue == 0x0) && (localCurrentKnob_3 == 0x2)){
+      if ((knobpreviousvalue == 0x0) && (localCurrentKnob_3 == 0x2)) {
         rotation = -1;
       }
-      if((knobpreviousvalue == 0x1) && (localCurrentKnob_3 == 0x0)){
+      if ((knobpreviousvalue == 0x1) && (localCurrentKnob_3 == 0x0)) {
         rotation = -1;
       }
-      if((knobpreviousvalue == 0x1) && (localCurrentKnob_3 == 0x3)){
+      if ((knobpreviousvalue == 0x1) && (localCurrentKnob_3 == 0x3)) {
         rotation = 1;
       }
-      if((knobpreviousvalue == 0x2) && (localCurrentKnob_3 == 0x0)){
+      if ((knobpreviousvalue == 0x2) && (localCurrentKnob_3 == 0x0)) {
         rotation = 1;
       }
-      if((knobpreviousvalue == 0x2) && (localCurrentKnob_3 == 0x3)){
+      if ((knobpreviousvalue == 0x2) && (localCurrentKnob_3 == 0x3)) {
         rotation = -1;
       }
-      if((knobpreviousvalue == 0x3) && (localCurrentKnob_3 == 0x1)){
+      if ((knobpreviousvalue == 0x3) && (localCurrentKnob_3 == 0x1)) {
         rotation = -1;
       }
-      if((knobpreviousvalue == 0x3) && (localCurrentKnob_3 == 0x2)){
+      if ((knobpreviousvalue == 0x3) && (localCurrentKnob_3 == 0x2)) {
         rotation = 1;
       }
-      if((knobposition == 16) && (rotation == 1)){
-      return;
+      if ((knobposition == 16) && (rotation == 1)) {
+        return;
       }
-      if((knobposition == 0) && (rotation == -1)){
+      if ((knobposition == 0) && (rotation == -1)) {
         return;
       }
       knobposition += rotation;
@@ -106,14 +105,14 @@ QueueHandle_t msgOutQ;
 
 
 void setOutMuxBit(const uint8_t bitIdx, const bool value) {
-      digitalWrite(REN_PIN,LOW);
-      digitalWrite(RA0_PIN, bitIdx & 0x01);
-      digitalWrite(RA1_PIN, bitIdx & 0x02);
-      digitalWrite(RA2_PIN, bitIdx & 0x04);
-      digitalWrite(OUT_PIN,value);
-      digitalWrite(REN_PIN,HIGH);
-      delayMicroseconds(2);
-      digitalWrite(REN_PIN,LOW);
+  digitalWrite(REN_PIN, LOW);
+  digitalWrite(RA0_PIN, bitIdx & 0x01);
+  digitalWrite(RA1_PIN, bitIdx & 0x02);
+  digitalWrite(RA2_PIN, bitIdx & 0x04);
+  digitalWrite(OUT_PIN, value);
+  digitalWrite(REN_PIN, HIGH);
+  delayMicroseconds(2);
+  digitalWrite(REN_PIN, LOW);
 }
 
 void setup() {
@@ -146,7 +145,7 @@ void setup() {
 
   keyArrayMutex = xSemaphoreCreateMutex();
   keyPressedVolMutex = xSemaphoreCreateMutex();
-  
+
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
   sampleTimer->setOverflow(22000, HERTZ_FORMAT);
@@ -155,12 +154,12 @@ void setup() {
 
   TaskHandle_t scanKeysHandle = NULL;
   xTaskCreate(
-  scanKeysTask, /* Function that implements the task */
-  "scanKeys", /* Text name for the task */
-  64, /* Stack size in words, not bytes */
-  NULL, /* Parameter passed into the task */
-  2, /* Task priority */
-  &scanKeysHandle ); /* Pointer to store the task handle */
+    scanKeysTask, /* Function that implements the task */
+    "scanKeys", /* Text name for the task */
+    64, /* Stack size in words, not bytes */
+    NULL, /* Parameter passed into the task */
+    2, /* Task priority */
+    &scanKeysHandle ); /* Pointer to store the task handle */
 
   TaskHandle_t displayUpdateHandle = NULL;
   xTaskCreate(
@@ -194,43 +193,37 @@ void setup() {
   //Initialise UART
   Serial.begin(115200);
   Serial.println("Hello World");
-  
+
   vTaskStartScheduler();
 
 }
 
 //MY CODE BEGINS HERE:
 const uint32_t fs = 22000; //sampling rate
-const double ones = pow(2,32); 
-const uint32_t stepSizes [] = {calcPhaseStep(261.63),calcPhaseStep(277.18),calcPhaseStep(293.66),calcPhaseStep(311.13),calcPhaseStep(329.63),calcPhaseStep(349.23),calcPhaseStep(369.99),calcPhaseStep(392.00),calcPhaseStep(415.30),calcPhaseStep(440.00),calcPhaseStep(466.16),calcPhaseStep(493.88)};
+const double ones = pow(2, 32);
+const uint32_t stepSizes [] = {calcPhaseStep(261.63), calcPhaseStep(277.18), calcPhaseStep(293.66), calcPhaseStep(311.13), calcPhaseStep(329.63), calcPhaseStep(349.23), calcPhaseStep(369.99), calcPhaseStep(392.00), calcPhaseStep(415.30), calcPhaseStep(440.00), calcPhaseStep(466.16), calcPhaseStep(493.88)};
 volatile uint32_t currentStepSize;
 knob knob_3;
 volatile uint8_t keyArray[7];
-volatile char noteMessage[] = "xxx";
+volatile char noteMessage[] = "    ";
 std::string keysPressedVol = "";
 const char intToHex[] = "0123456789ABCDEF";
 
-uint32_t calcPhaseStep(uint32_t freq){ //TODO: implement octaves
-  return round((freq*ones)/fs);
+uint32_t calcPhaseStep(uint32_t freq) { //TODO: implement octaves
+  return round((freq * ones) / fs);
 }
-
 
 
 uint8_t readCols(){
   int c0 = digitalRead(C0_PIN);
-  int c1 = digitalRead(C1_PIN);
-  int c2 = digitalRead(C2_PIN);
-  int c3 = digitalRead(C3_PIN);
-  //ORing bits to get the cols as a byte 
-  uint8_t cols = 0;
-  cols = cols | c0;
-  cols = cols | c1 << 1;
-  cols = cols | c2 << 2;
-  cols = cols | c3 << 3;
+  int c1 = digitalRead(C1_PIN) << 1;
+  int c2 = digitalRead(C2_PIN) << 2;
+  int c3 = digitalRead(C3_PIN) << 3;
+  uint8_t cols = c3+c2+c1+c0;
   return cols;
 }
 
-void setRow(uint8_t rowIdx){
+void setRow(uint8_t rowIdx) {
   digitalWrite(REN_PIN, 0); //disable row select (prevents glitches while address pins are changed)
   digitalWrite(RA0_PIN, rowIdx&1);
   digitalWrite(RA1_PIN, rowIdx&2);
@@ -238,138 +231,118 @@ void setRow(uint8_t rowIdx){
   digitalWrite(REN_PIN, 1); //enable row select
 }
 
-uint32_t checkKeyPress(uint8_t k0,uint8_t k1,uint8_t k2){
+uint32_t checkKeyPress(uint16_t keyarray) {
   std::string keysPressed = "";
-  uint32_t stepSizeReturn;
-  stepSizeReturn = currentStepSize; //default if none of the if conditions are met
-  if ((k0==0xE) &&(k1==0xF) && (k2 == 0xF)){
-    keysPressed+='C';
-    stepSizeReturn = stepSizes[0];
-    noteMessage[0] = 'C';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[0];
+  uint32_t stepSizeReturn = currentStepSize; //default if none of the if conditions are met
+  switch(keyarray){
+     case 0xFFF:
+      stepSizeReturn = 0;
+      noteMessage[0] = ' ';
+      noteMessage[1] = ' ';
+      noteMessage[2] = ' ';
+      noteMessage[3] = ' ';
+      break;
+    case 0xEFF:
+      keysPressed += 'C';
+      stepSizeReturn = stepSizes[0];
+      noteMessage[0] = 'C';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[0];
+      break;
+    case 0xDFF:
+      keysPressed += 'C';
+      keysPressed += '#';
+      stepSizeReturn = stepSizes[1];
+      noteMessage[0] = 'C';
+      noteMessage[1] = '#';
+      noteMessage[2] = '4';
+      noteMessage[3] = intToHex[1];
+      break;
+    case 0xBFF:
+      keysPressed += 'D';
+      stepSizeReturn = stepSizes[2];
+      noteMessage[0] = 'D';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[2];
+      break;
+    case 0x7FF:
+      keysPressed += 'D';
+      keysPressed += '#';
+      stepSizeReturn = stepSizes[3];
+      noteMessage[0] = 'D';
+      noteMessage[1] = '#';
+      noteMessage[2] = '4';
+      noteMessage[3] = intToHex[3];
+      break;
+    case 0xFEF:
+      keysPressed += 'E';
+      stepSizeReturn = stepSizes[4];
+      noteMessage[0] = 'E';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[4];
+      break;
+    case 0xFDF:
+      keysPressed += 'F';
+      stepSizeReturn = stepSizes[5];
+      noteMessage[0] = 'F';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[5];
+      break;
+    case 0xFBF:
+      keysPressed += 'F';
+      keysPressed += '#';
+      stepSizeReturn = stepSizes[6];
+      noteMessage[0] = 'F';
+      noteMessage[1] = '#';
+      noteMessage[2] = '4';
+      noteMessage[3] = intToHex[6];
+      break;
+    case 0xF7F:
+      keysPressed += 'G';
+      stepSizeReturn = stepSizes[7];
+      noteMessage[0] = 'G';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[7];
+      break;
+    case 0xFFE:
+      keysPressed += 'G';
+      keysPressed += '#';
+      stepSizeReturn = stepSizes[8];
+      noteMessage[0] = 'G';
+      noteMessage[1] = '#';
+      noteMessage[2] = '4';
+      noteMessage[3] = intToHex[8];
+      break;
+    case 0xFFD:
+      keysPressed += 'A';
+      stepSizeReturn = stepSizes[9];
+      noteMessage[0] = 'A';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[9];
+      break;
+    case 0xFFB:
+      keysPressed += 'A';
+      keysPressed += '#';
+      stepSizeReturn = stepSizes[10];
+      noteMessage[0] = 'A';
+      noteMessage[1] = '#';
+      noteMessage[2] = '4';
+      noteMessage[3] = intToHex[10];
+      break;
+    case 0xFF7:
+      keysPressed += 'B';
+      stepSizeReturn = stepSizes[11];
+      noteMessage[0] = 'B';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[11];
+      break;
+    default:
+      stepSizeReturn = stepSizeReturn;
+      noteMessage[0] = noteMessage[0];
+      noteMessage[1] = noteMessage[1];
+      noteMessage[2] = noteMessage[2];
   }
-  else{
-    keysPressed+='_';
-  }
-  if ((k0==0xD) &&(k1==0xF) && (k2 == 0xF)){
-    keysPressed+='C';
-    keysPressed+='#';
-    stepSizeReturn = stepSizes[1];
-    noteMessage[0] = 'C#';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[1];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k0==0xB) &&(k1==0xF) && (k2 == 0xF)){
-    keysPressed+='D';
-    stepSizeReturn = stepSizes[2];
-    noteMessage[0] = ' D';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[2];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k0==0x7) &&(k1==0xF) && (k2 == 0xF)){
-    keysPressed+='D';
-    keysPressed+='#';
-    stepSizeReturn = stepSizes[3];
-    noteMessage[0] = 'D#';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[3];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k1==0xE) &&(k0==0xF) && (k2 == 0xF)){
-    keysPressed+='E';
-    stepSizeReturn = stepSizes[4];
-    noteMessage[0] = 'E';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[4];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k1==0xD)&&(k0==0xF) && (k2 == 0xF)){
-    keysPressed+='F';
-    stepSizeReturn = stepSizes[5];
-    noteMessage[0] = 'F';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[5];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k1==0xB)&&(k0==0xF) && (k2 == 0xF)){
-    keysPressed+='F';
-    keysPressed+='#';
-    stepSizeReturn = stepSizes[6];
-    noteMessage[0] = 'F#';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[6];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k1==0x7)&&(k0==0xF) && (k2 == 0xF)){
-    keysPressed+='G';
-    stepSizeReturn = stepSizes[7];
-    noteMessage[0] = 'G';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[7];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k2==0xE)&&(k0==0xF) && (k1 == 0xF)){
-    keysPressed+='G';
-    keysPressed+='#';
-    stepSizeReturn = stepSizes[8];
-    noteMessage[0] = 'G#';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[8];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k2==0xD)&&(k0==0xF) && (k1 == 0xF)){
-    keysPressed+='A';
-    stepSizeReturn = stepSizes[9];
-    noteMessage[0] = 'A';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[9];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k2==0xB)&&(k0==0xF) && (k1 == 0xF)){
-    keysPressed+='A';
-    keysPressed+='#';
-    stepSizeReturn = stepSizes[10];
-    noteMessage[0] = 'A#';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[10];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k2==0x7)&&(k0==0xF) && (k1 == 0xF)){
-    keysPressed+='B';
-    stepSizeReturn = stepSizes[11];
-    noteMessage[0] = 'B';
-    noteMessage[1] = '4';
-    noteMessage[2] = intToHex[11];
-  }
-  else{
-    keysPressed+='_';
-  }
-  if ((k0==0xf) &&(k1==0xF) && (k2 == 0xF)){
-    stepSizeReturn = 0;
-  }
+  
   xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
   keysPressedVol = keysPressed;
   xSemaphoreGive(keyPressedVolMutex);
@@ -394,27 +367,27 @@ void msgOutTask(void *pvParameters) {
   }
 }
 
-void msgInTask(void *pvParameters){
-  const TickType_t xFrequency = 5/portTICK_PERIOD_MS; //initiation interval of the task (converted from time in ticks to 5ms)
+void msgInTask(void *pvParameters) {
+  const TickType_t xFrequency = 5 / portTICK_PERIOD_MS; //initiation interval of the task (converted from time in ticks to 5ms)
   TickType_t xLastWakeTime = xTaskGetTickCount(); //stores time of last initiation
   char inMsg[] = "xxx";
   uint8_t placement = 0;
-  while(1){
+  while (1) {
     vTaskDelayUntil( &xLastWakeTime, xFrequency );
-    while(Serial.available() > 0){
+    while (Serial.available() > 0) {
       char message_in = Serial.read();
-      if(message_in != '\n'){
+      if (message_in != '\n') {
         inMsg[placement++] = message_in;
       }
-      else{
+      else {
         placement = 0;
-        if(inMsg[0] == 'R'){
+        if (inMsg[0] == 'R') {
           __atomic_store_n(&currentStepSize, 0, __ATOMIC_RELAXED);
         }
-        else if(inMsg[0] == 'P'){
-          std::string key_in = ""; 
+        else if (inMsg[0] == 'P') {
+          std::string key_in = "";
           key_in.push_back(inMsg[2]);
-          __atomic_store_n(&currentStepSize, stepSizes[std::stoi(key_in,0,16)], __ATOMIC_RELAXED);
+          __atomic_store_n(&currentStepSize, stepSizes[std::stoi(key_in, 0, 16)], __ATOMIC_RELAXED);
         }
       }
     }
@@ -424,58 +397,62 @@ void msgInTask(void *pvParameters){
 
 //THREADS
 void scanKeysTask(void * pvParameters) {
-  const TickType_t xFrequency = 20/portTICK_PERIOD_MS; //initiation interval of the task (converted from time in ticks to 50ms)
+  const TickType_t xFrequency = 20 / portTICK_PERIOD_MS; //initiation interval of the task (converted from time in ticks to 50ms)
   TickType_t xLastWakeTime = xTaskGetTickCount(); //stores time of last initiation
   //subsequent iterations this variable will be updated by the call to vTaskDelayUntil().
-  
-  while(1){
+
+  while (1) {
     vTaskDelayUntil( &xLastWakeTime, xFrequency );
-   // NEED TO REINCLUDE
-   xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
-    for (int i=0; i<=3; i++){
+    // NEED TO REINCLUDE
+    xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
+    for (int i = 0; i <= 3; i++) {
       setRow(i);
       delayMicroseconds(3);
       keyArray[i] = readCols();
-  }
-  uint32_t localCurrentStepSize = checkKeyPress(keyArray[0],keyArray[1],keyArray[2]);
-  xQueueSend( msgOutQ, (char*) noteMessage, portMAX_DELAY);
-  uint8_t localCurrentKnob_3 = keyArray[3] & 0x3;
-  knob_3.knobdecoder(localCurrentKnob_3);
-  knob_3.set_previous_position(localCurrentKnob_3);
-  __atomic_store_n(&currentStepSize, localCurrentStepSize, __ATOMIC_RELAXED); // ensures atomic operation
-  xSemaphoreGive(keyArrayMutex);
+    }
+    uint16_t k0 = keyArray[0] << 8;
+    uint8_t k1 = keyArray[1] << 4;
+    uint8_t k2 = keyArray[2];
+    uint16_t keysConcatenated = k0+k1+k2;
+    uint32_t localCurrentStepSize = checkKeyPress(keysConcatenated);
+    xQueueSend( msgOutQ, (char*) noteMessage, portMAX_DELAY);
+    uint8_t localCurrentKnob_3 = keyArray[3] & 0x3;
+    knob_3.knobdecoder(localCurrentKnob_3);
+    knob_3.set_previous_position(localCurrentKnob_3);
+    __atomic_store_n(&currentStepSize, localCurrentStepSize, __ATOMIC_RELAXED); // ensures atomic operation
+    xSemaphoreGive(keyArrayMutex);
   }
 }
 
-void displayUpdateTask(void * pvParameters){
-  const TickType_t xFrequency = 100/portTICK_PERIOD_MS; //initiation interval of the task (converted from time in ticks to 50ms)
+void displayUpdateTask(void * pvParameters) {
+  const TickType_t xFrequency = 100 / portTICK_PERIOD_MS; //initiation interval of the task (converted from time in ticks to 50ms)
   TickType_t xLastWakeTime = xTaskGetTickCount(); //stores time of last initiation
 
-  while(1){
+  while (1) {
     vTaskDelayUntil( &xLastWakeTime, xFrequency );
-    std::string myString = ""; 
+    std::string myString = "";
     u8g2.clearBuffer();         // clear the internal memory
     u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
-    u8g2.drawStr(2,10,keysPressedVol.c_str());  // write something to the internal memory
+    u8g2.drawStr(2, 10, keysPressedVol.c_str()); // write something to the internal memory
     u8g2.sendBuffer();          // transfer internal memory to the display
 
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
-    
+
     u8g2.clearBuffer();         // clear the internal memory
-    u8g2.setCursor(2,30);       // set coordinates to print result
-    u8g2.print(keyArray[0],HEX);
-    u8g2.print(keyArray[1],HEX);
-    u8g2.print(keyArray[2],HEX);
+    u8g2.setCursor(2, 30);      // set coordinates to print result
+    u8g2.print(keyArray[0], HEX);
+    u8g2.print(keyArray[1], HEX);
+    u8g2.print(keyArray[2], HEX);
     xSemaphoreGive(keyArrayMutex);
     xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
-    u8g2.print(knob_3.get_previous_value(),HEX);
-    u8g2.print(knob_3.get_knob_position(),HEX);
+    u8g2.print(knob_3.get_previous_value(), HEX);
+    u8g2.print(knob_3.get_knob_position(), HEX);
     u8g2.sendBuffer();          // transfer internal memory to the display
 
     u8g2.clearBuffer();
-    u8g2.setCursor(64,30);
+    u8g2.setCursor(64, 30);
     u8g2.print((char*) noteMessage);
-    u8g2.sendBuffer(); 
+    u8g2.sendBuffer();
     //Toggle LED
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     xSemaphoreGive(keyPressedVolMutex);
