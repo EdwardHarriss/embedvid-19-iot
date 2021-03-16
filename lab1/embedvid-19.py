@@ -77,19 +77,52 @@ def get_temp():
     Tobj = (Tdie**4 + (fVobj/S))**0.25
     return Tobj - 276.55
 
-def getMagValues():
+def mag_available():
 	config = [0x00, 0x5C, 0x00]
 	bus.write_i2c_block_data(0x0C, 0x60, config)
-	data = bus.read_byte(0x0C)
+	#Reg Addr, Data Low, Data High
+	time.sleep(0.1)
+	#0x0C specifies device address
+	# write register command is 0x60
+	status = bus.read_byte(0x0C)
+	#reads status byte
+	#print(status)
+
+	if (status & 0x10 == 0 ):
+		#error bit
+		return True
+	else:
+		return False
+
+def get_mag():
+	try:
+		mag_available() == True
+	except:
+		bus.write_byte(0x0C, 0xF0)
+		#reset command
+		time.sleep(0.1)
+		return get_mag()
+
 	config = [0x02, 0xB4, 0x08]
+	#change reg addr
 	bus.write_i2c_block_data(0x0C, 0x60, config)
-	data = bus.read_byte(0x0C) 
-	bus.write_byte(0x0C, 0x3E)
 	time.sleep(0.1)
 	data = bus.read_byte(0x0C)
-	time.sleep(0.1)
+	try:
+		bus.write_byte(0x0C, 0x3E)
+		#0x3E: (Z, Y, X, Temp bits set to 1110, so Temp isn't measured)
+		time.sleep(0.2)
+		data = bus.read_byte(0x0C)
+	except:
+		time.sleep(2)
+		bus.write_byte(0x0C, 0x3E)
+		time.sleep(0.2)
+		data = bus.read_byte(0x0C)
+
+
 	data= bus.read_i2c_block_data(0x0C, 0x4E, 7)
-	#convert data  
+
+	#convert data
 	xMag = data[1] * 256 + data[2]
 	yMag = data[3] * 256 + data[4]
 	zMag = data[5] * 256 + data[6]
@@ -98,10 +131,8 @@ def getMagValues():
 	if yMag > 32767 :
 		yMag -= 65536
 	if zMag > 32767 :
-		zMag -= 65536
-	bus.write_byte(0x0C, 0x80)
-	time.sleep(0.1)
-	data = bus.read_byte(0x0C)
+		zMag -=65536
+
 	return xMag, yMag, zMag
 
 
@@ -110,7 +141,7 @@ def reset():
     movement = False
     global time_scale
     time_scale = time.time()
-    mx, my, mz = getMagValues()
+    mx, my, mz = get_mag()
     user.set_values(mx, my, mz, sensor_tof.range)
     send_data(movement, sensor_tof.range, float("{:.1f}".format(get_temp())))
 
@@ -142,7 +173,7 @@ def average_calculator(mx, my, mz, md, distance_diff, distance_change_ave, angle
 
 
 def movement_calc(angle_ave, distance_ave, distance_change_ave):
-    if angle_ave > 17 or distance_change_ave > 200 or distance_ave == 0 or distance_ave > 2000:
+    if angle_ave > 17 or distance_change_ave > 400 or distance_ave == 0 or distance_ave > 2000:
         return True
     return False
 
@@ -220,7 +251,7 @@ while True:
             pressed()
             movement = False
 
-    mx, my, mz = getMagValues()
+    mx, my, mz = get_mag()
     md = sensor_tof.range
     u = user.get_values()
     mx = abs(mx-u[0])
@@ -229,6 +260,7 @@ while True:
     delta_d = abs(md-u[3])
     button.when_pressed = pressed
     angle_ave, distance_change_ave, distance_ave, number = average_calculator(mx, my, mz, md, delta_d, distance_change_ave, angle_ave, distance_ave, number)
+    print("Angle Ave: ", angle_ave, " Distance Change Ave: ", distance_change_ave)
     if time.time() - time_scale > 29:
         mt = float("{:.1f}".format(get_temp()))
         movement = movement_calc(angle_ave, distance_ave, distance_change_ave)

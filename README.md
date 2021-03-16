@@ -2,7 +2,7 @@
 
 ## embedvid-19.py ##
 
-Before running, downlaod jwt and https://www.adafruit.com/product/3317
+Before running, downlaod pyjwt and https://www.adafruit.com/product/3317
 ```
 sudo pip3 install pyjwt
 ```
@@ -36,9 +36,4 @@ Movement: (True if moved too much, false otherwise)<br/>
 Average Distance: (0 if movement is True)<br/>
 Temperature: (0 if movement is True)<br/>
 
----
-
-### To do ###
-
-- Improve Magneometer
 
