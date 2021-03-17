@@ -8,9 +8,9 @@
 class knob {
   private:
     int8_t knobposition;
-    uint8_t knobpreviousvalue;
-    uint8_t upper_limit;
-    uint8_t lower_limit;
+    int8_t knobpreviousvalue;
+    int8_t upper_limit;
+    int8_t lower_limit;
     int8_t prevrot = 0;
   public:
     knob() {
