@@ -302,7 +302,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
   knob_2.set_previous_position(localCurrentKnob_2);
   knob_3.knobdecoder(localCurrentKnob_3);
   knob_3.set_previous_position(localCurrentKnob_3);
-  int8_t octave = (knob_0.get_knob_position()/2)+4;
+  int8_t octave = (knob_0.get_knob_position()/2)+4; //to get octave, divide knob0 position by 2 and add 4
   //octave = (octave/2) + 8;
   char o [1];
   itoa(octave, o, 16);
