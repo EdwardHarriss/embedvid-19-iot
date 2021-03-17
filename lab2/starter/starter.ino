@@ -236,16 +236,23 @@ uint32_t checkKeyPress(uint16_t keyarray) {
   uint32_t stepSizeReturn = currentStepSize; //default if none of the if conditions are met
   switch(keyarray){
      case 0xFFF:
-      stepSizeReturn = 0;
-      noteMessage[0] = ' ';
-      noteMessage[1] = ' ';
-      noteMessage[2] = ' ';
-      noteMessage[3] = ' ';
+      if(noteMessage[0] != 'R' && stepSizeReturn != 0){
+        stepSizeReturn = 0;
+        noteMessage[0] = 'R';
+        noteMessage[1] = noteMessage[1];
+        noteMessage[2] = noteMessage[2];
+      }
+      else{
+        stepSizeReturn = 0;
+        noteMessage[0] = ' ';
+        noteMessage[1] = ' ';
+        noteMessage[2] = ' ';
+      }
       break;
     case 0xEFF:
       keysPressed += 'C';
       stepSizeReturn = stepSizes[0];
-      noteMessage[0] = 'C';
+      noteMessage[0] = 'P';
       noteMessage[1] = '4';
       noteMessage[2] = intToHex[0];
       break;
@@ -253,38 +260,36 @@ uint32_t checkKeyPress(uint16_t keyarray) {
       keysPressed += 'C';
       keysPressed += '#';
       stepSizeReturn = stepSizes[1];
-      noteMessage[0] = 'C';
-      noteMessage[1] = '#';
-      noteMessage[2] = '4';
-      noteMessage[3] = intToHex[1];
+      noteMessage[0] = 'P';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[1];
       break;
     case 0xBFF:
       keysPressed += 'D';
       stepSizeReturn = stepSizes[2];
-      noteMessage[0] = 'D';
+      noteMessage[0] = 'P';
       noteMessage[1] = '4';
       noteMessage[2] = intToHex[2];
       break;
     case 0x7FF:
-      keysPressed += 'D';
-      keysPressed += '#';
+      keysPressed += 'E';
+      keysPressed += 'b';
       stepSizeReturn = stepSizes[3];
-      noteMessage[0] = 'D';
-      noteMessage[1] = '#';
-      noteMessage[2] = '4';
-      noteMessage[3] = intToHex[3];
+      noteMessage[0] = 'P';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[3];
       break;
     case 0xFEF:
       keysPressed += 'E';
       stepSizeReturn = stepSizes[4];
-      noteMessage[0] = 'E';
+      noteMessage[0] = 'P';
       noteMessage[1] = '4';
       noteMessage[2] = intToHex[4];
       break;
     case 0xFDF:
       keysPressed += 'F';
       stepSizeReturn = stepSizes[5];
-      noteMessage[0] = 'F';
+      noteMessage[0] = 'P';
       noteMessage[1] = '4';
       noteMessage[2] = intToHex[5];
       break;
@@ -292,15 +297,14 @@ uint32_t checkKeyPress(uint16_t keyarray) {
       keysPressed += 'F';
       keysPressed += '#';
       stepSizeReturn = stepSizes[6];
-      noteMessage[0] = 'F';
-      noteMessage[1] = '#';
-      noteMessage[2] = '4';
-      noteMessage[3] = intToHex[6];
+      noteMessage[0] = 'P';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[6];
       break;
     case 0xF7F:
       keysPressed += 'G';
       stepSizeReturn = stepSizes[7];
-      noteMessage[0] = 'G';
+      noteMessage[0] = 'P';
       noteMessage[1] = '4';
       noteMessage[2] = intToHex[7];
       break;
@@ -308,31 +312,29 @@ uint32_t checkKeyPress(uint16_t keyarray) {
       keysPressed += 'G';
       keysPressed += '#';
       stepSizeReturn = stepSizes[8];
-      noteMessage[0] = 'G';
-      noteMessage[1] = '#';
-      noteMessage[2] = '4';
-      noteMessage[3] = intToHex[8];
+      noteMessage[0] = 'P';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[8];
       break;
     case 0xFFD:
       keysPressed += 'A';
       stepSizeReturn = stepSizes[9];
-      noteMessage[0] = 'A';
+      noteMessage[0] = 'P';
       noteMessage[1] = '4';
       noteMessage[2] = intToHex[9];
       break;
     case 0xFFB:
-      keysPressed += 'A';
-      keysPressed += '#';
+      keysPressed += 'B';
+      keysPressed += 'b';
       stepSizeReturn = stepSizes[10];
-      noteMessage[0] = 'A';
-      noteMessage[1] = '#';
-      noteMessage[2] = '4';
-      noteMessage[3] = intToHex[10];
+      noteMessage[0] = 'P';
+      noteMessage[1] = '4';
+      noteMessage[2] = intToHex[10];
       break;
     case 0xFF7:
       keysPressed += 'B';
       stepSizeReturn = stepSizes[11];
-      noteMessage[0] = 'B';
+      noteMessage[0] = 'P';
       noteMessage[1] = '4';
       noteMessage[2] = intToHex[11];
       break;
