@@ -236,18 +236,10 @@ uint32_t checkKeyPress(uint16_t keyarray) {
   uint32_t stepSizeReturn = currentStepSize; //default if none of the if conditions are met
   switch(keyarray){
      case 0xFFF:
-      if(noteMessage[0] != 'R' && stepSizeReturn != 0){
-        stepSizeReturn = 0;
-        noteMessage[0] = 'R';
-        noteMessage[1] = noteMessage[1];
-        noteMessage[2] = noteMessage[2];
-      }
-      else{
-        stepSizeReturn = 0;
-        noteMessage[0] = ' ';
-        noteMessage[1] = ' ';
-        noteMessage[2] = ' ';
-      }
+       stepSizeReturn = 0;
+       noteMessage[0] = 'R';
+       noteMessage[1] = noteMessage[1];
+       noteMessage[2] = noteMessage[2];
       break;
     case 0xEFF:
       keysPressed += 'C';
