@@ -284,6 +284,25 @@ void setRow(uint8_t rowIdx) {
 uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
   std::string keysPressed = "";
   uint32_t stepSizeReturn = currentStepSize; //default if none of the if conditions are met
+    //get knob rotations
+  //first get knobs AB
+  uint8_t localCurrentKnob_0 = k4 >> 2;
+  uint8_t localCurrentKnob_1 = k4 & 0b11;
+  uint8_t localCurrentKnob_2 = k3 >> 2;
+  uint8_t localCurrentKnob_3 = k3 & 0b11;
+  //then update rotations
+  knob_0.knobdecoder(localCurrentKnob_0);
+  knob_0.set_previous_position(localCurrentKnob_0);
+  knob_1.knobdecoder(localCurrentKnob_1);
+  knob_1.set_previous_position(localCurrentKnob_1);
+  knob_2.knobdecoder(localCurrentKnob_2);
+  knob_2.set_previous_position(localCurrentKnob_2);
+  knob_3.knobdecoder(localCurrentKnob_3);
+  knob_3.set_previous_position(localCurrentKnob_3);
+  int8_t octave = knob_0.get_knob_position();
+  octave = (octave/2) + 8;
+  char o [1];
+  itoa(octave, o, 16);
   switch(keyarray){
      case 0xFFF:
        stepSizeReturn = 0;
@@ -295,7 +314,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
       keysPressed += 'C';
       stepSizeReturn = stepSizes[0];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[0];
       break;
     case 0xDFF:
@@ -391,23 +410,6 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
   xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
   keysPressedVol = keysPressed;
   xSemaphoreGive(keyPressedVolMutex);
-
-
-  //get knob rotations
-  //first get knobs AB
-  uint8_t localCurrentKnob_0 = k4 >> 2;
-  uint8_t localCurrentKnob_1 = k4 & 0b11;
-  uint8_t localCurrentKnob_2 = k3 >> 2;
-  uint8_t localCurrentKnob_3 = k3 & 0b11;
-  //then update rotations
-  knob_0.knobdecoder(localCurrentKnob_0);
-  knob_0.set_previous_position(localCurrentKnob_0);
-  knob_1.knobdecoder(localCurrentKnob_1);
-  knob_1.set_previous_position(localCurrentKnob_1);
-  knob_2.knobdecoder(localCurrentKnob_2);
-  knob_2.set_previous_position(localCurrentKnob_2);
-  knob_3.knobdecoder(localCurrentKnob_3);
-  knob_3.set_previous_position(localCurrentKnob_3);
   
   
   return stepSizeReturn;
