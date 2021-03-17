@@ -300,7 +300,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
   knob_3.knobdecoder(localCurrentKnob_3);
   knob_3.set_previous_position(localCurrentKnob_3);
   int8_t octave = knob_0.get_knob_position();
-  octave = (octave/2) + 8;
+  octave = (octave/2) + 4;
   char o [1];
   itoa(octave, o, 16);
   switch(keyarray){
@@ -322,14 +322,14 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
       keysPressed += '#';
       stepSizeReturn = stepSizes[1];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[1];
       break;
     case 0xBFF:
       keysPressed += 'D';
       stepSizeReturn = stepSizes[2];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[2];
       break;
     case 0x7FF:
@@ -337,21 +337,21 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
       keysPressed += 'b';
       stepSizeReturn = stepSizes[3];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[3];
       break;
     case 0xFEF:
       keysPressed += 'E';
       stepSizeReturn = stepSizes[4];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[4];
       break;
     case 0xFDF:
       keysPressed += 'F';
       stepSizeReturn = stepSizes[5];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[5];
       break;
     case 0xFBF:
@@ -359,14 +359,14 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
       keysPressed += '#';
       stepSizeReturn = stepSizes[6];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[6];
       break;
     case 0xF7F:
       keysPressed += 'G';
       stepSizeReturn = stepSizes[7];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[7];
       break;
     case 0xFFE:
@@ -374,14 +374,14 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
       keysPressed += '#';
       stepSizeReturn = stepSizes[8];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[8];
       break;
     case 0xFFD:
       keysPressed += 'A';
       stepSizeReturn = stepSizes[9];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[9];
       break;
     case 0xFFB:
@@ -389,14 +389,14 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
       keysPressed += 'b';
       stepSizeReturn = stepSizes[10];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[10];
       break;
     case 0xFF7:
       keysPressed += 'B';
       stepSizeReturn = stepSizes[11];
       noteMessage[0] = 'P';
-      noteMessage[1] = '4';
+      noteMessage[1] = o[0];
       noteMessage[2] = intToHex[11];
       break;
     default:
@@ -435,10 +435,10 @@ void sampleISR() {
   
   //OCTAVES IMPLEMENTED ON KNOB 0
   if (knobsrot[0]>=0){
-    loccurrentStepSize = loccurrentStepSize << (uint32_t) round(knobsrot[0]/2);
+    loccurrentStepSize = loccurrentStepSize << (uint32_t) round((knobsrot[0])/2);
   }
   else{
-    loccurrentStepSize = loccurrentStepSize >> (uint32_t) round(-1*knobsrot[0]/2);
+    loccurrentStepSize = loccurrentStepSize >> (uint32_t) round(-1*(knobsrot[0])/2);
   }
 
   //NOTE DISTORTION "WHAMMY BAR" ON X-AXIS JOYSTICK
@@ -483,7 +483,7 @@ void msgInTask(void *pvParameters) {
       else {
         placement = 0;
         if (inMsg[0] == 'R') {
-          __atomic_store_n(&currentStepSize, 0, __ATOMIC_RELAXED);
+          __atomic_store_n(&currentStepSize, currentStepSize, __ATOMIC_RELAXED);
         }
         else if (inMsg[0] == 'P') {
           std::string key_in = "";
