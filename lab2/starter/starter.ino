@@ -490,6 +490,7 @@ void msgInTask(void *pvParameters) {
         }
         else if (inMsg[0] == 'P') {
           std::string key_in = "";
+          //write something here that changes the octave of incoming stuff.
           key_in.push_back(inMsg[2]);
           __atomic_store_n(&currentStepSize, stepSizes[std::stoi(key_in, 0, 16)], __ATOMIC_RELAXED);
         }
