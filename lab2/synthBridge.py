@@ -26,8 +26,9 @@ def on_message(client, userdata, msg):
 #Initialise serial
 try:
 	ser = serial.Serial(SER_PORT, 115200, timeout=1)
-except:
+except serial.SerialException as e:
 	print("Could not open serial port")
+	print(e.errno)
 	
 	quit()
 

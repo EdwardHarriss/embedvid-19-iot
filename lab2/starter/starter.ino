@@ -462,7 +462,7 @@ void msgOutTask(void *pvParameters) {
   while (1) {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
     xQueueReceive(msgOutQ, outMsg, portMAX_DELAY);
-    //Serial.println(outMsg);
+    Serial.println(outMsg);
   }
 }
 
