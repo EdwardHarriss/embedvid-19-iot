@@ -4,20 +4,22 @@
 #include <math.h>
 #include <string.h>
 
+
 class knob {
   private:
-    uint8_t knobposition;
+    int8_t knobposition;
     uint8_t knobpreviousvalue;
     uint8_t upper_limit;
     uint8_t lower_limit;
+    int8_t prevrot = 0;
   public:
     knob() {
       knobposition = 0;
       upper_limit = 16;
-      lower_limit = 0;
+      lower_limit = -16;
     }
 
-    uint8_t get_knob_position() {
+    int8_t get_knob_position() {
       return knobposition;
     }
 
@@ -29,36 +31,65 @@ class knob {
       knobpreviousvalue = new_prev;
     }
 
-    void knobdecoder(uint8_t localCurrentKnob_3) {
+    void set_upper_limit(int8_t newupper){
+      upper_limit = newupper;
+    }
+    void set_lower_limit(int8_t newlower){
+      lower_limit = newlower;
+    }
+
+    void knobdecoder(uint8_t localCurrentKnob) {
       int8_t rotation = 0;
-      if ((knobpreviousvalue == 0x0) && (localCurrentKnob_3 == 0x1)) {
+      if ((knobpreviousvalue == 0x0) && (localCurrentKnob == 0x1)) {
         rotation = 1;
+        prevrot = 1;
       }
-      if ((knobpreviousvalue == 0x0) && (localCurrentKnob_3 == 0x2)) {
+      else if ((knobpreviousvalue == 0x0) && (localCurrentKnob == 0x2)) {
         rotation = -1;
+        prevrot = -1;
       }
-      if ((knobpreviousvalue == 0x1) && (localCurrentKnob_3 == 0x0)) {
+      /*else if ((knobpreviousvalue == 0x0) && (localCurrentKnob == 0x3)) {
+        rotation = 2*prevrot;
+      }*/
+      else if ((knobpreviousvalue == 0x1) && (localCurrentKnob == 0x0)) {
         rotation = -1;
+        prevrot = -1;
       }
-      if ((knobpreviousvalue == 0x1) && (localCurrentKnob_3 == 0x3)) {
+      /*else if ((knobpreviousvalue == 0x1) && (localCurrentKnob == 0x1)) {
+        rotation = 2*prevrot;
+      }*/
+      else if ((knobpreviousvalue == 0x1) && (localCurrentKnob == 0x3)) {
         rotation = 1;
+        prevrot = 1;
       }
-      if ((knobpreviousvalue == 0x2) && (localCurrentKnob_3 == 0x0)) {
+      else if ((knobpreviousvalue == 0x2) && (localCurrentKnob== 0x0)) {
         rotation = 1;
+        prevrot = 1;
       }
-      if ((knobpreviousvalue == 0x2) && (localCurrentKnob_3 == 0x3)) {
+      /*else if ((knobpreviousvalue == 0x2) && (localCurrentKnob == 0x1)) {
+        rotation = 2*prevrot;
+      }*/
+      else if ((knobpreviousvalue == 0x2) && (localCurrentKnob == 0x3)) {
         rotation = -1;
+        prevrot = -1;
       }
-      if ((knobpreviousvalue == 0x3) && (localCurrentKnob_3 == 0x1)) {
+      /*else if ((knobpreviousvalue == 0x3) && (localCurrentKnob == 0x0)) {
+        rotation = 2*prevrot;
+      }*/
+      else if ((knobpreviousvalue == 0x3) && (localCurrentKnob == 0x1)) {
         rotation = -1;
+        prevrot = -1;
       }
-      if ((knobpreviousvalue == 0x3) && (localCurrentKnob_3 == 0x2)) {
+      else if ((knobpreviousvalue == 0x3) && (localCurrentKnob == 0x2)) {
         rotation = 1;
+        prevrot = 1;
       }
-      if ((knobposition == 16) && (rotation == 1)) {
+      if ((knobposition > upper_limit) && (rotation == 1)) {
+        knobposition = upper_limit;
         return;
       }
-      if ((knobposition == 0) && (rotation == -1)) {
+      if ((knobposition < lower_limit) && (rotation == -1)) {
+        knobposition = lower_limit;
         return;
       }
       knobposition += rotation;
@@ -146,6 +177,8 @@ void setup() {
   keyArrayMutex = xSemaphoreCreateMutex();
   keyPressedVolMutex = xSemaphoreCreateMutex();
 
+  
+
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
   sampleTimer->setOverflow(22000, HERTZ_FORMAT);
@@ -203,16 +236,33 @@ const uint32_t fs = 22000; //sampling rate
 const double ones = pow(2, 32);
 const uint32_t stepSizes [] = {calcPhaseStep(261.63), calcPhaseStep(277.18), calcPhaseStep(293.66), calcPhaseStep(311.13), calcPhaseStep(329.63), calcPhaseStep(349.23), calcPhaseStep(369.99), calcPhaseStep(392.00), calcPhaseStep(415.30), calcPhaseStep(440.00), calcPhaseStep(466.16), calcPhaseStep(493.88)};
 volatile uint32_t currentStepSize;
+
+knob knob_0;
+knob knob_1;
+knob knob_2;
 knob knob_3;
+
 volatile uint8_t keyArray[7];
+
+volatile int32_t joyValues[2]; //{x, y}
+
 volatile char noteMessage[] = "   ";
 std::string keysPressedVol = "";
 const char intToHex[] = "0123456789ABCDEF";
 
-uint32_t calcPhaseStep(uint32_t freq) { //TODO: implement octaves
+int32_t calcPhaseStep(int32_t freq) { //TODO: implement octaves
   return round((freq * ones) / fs);
 }
 
+void readJoy(){
+  int joyx = analogRead(JOYX_PIN);
+  int joyy = analogRead(JOYY_PIN);
+  //inputs are inverted
+  int xMap = -1*(joyx - 545); 
+  int yMap = -1*(joyy - 440);
+  joyValues[0] = xMap/10; //ranges from -38 -> 36 (left to right)
+  joyValues[1] = yMap/10; //ranges from -40 -> 34 (bottom to top)
+}
 
 uint8_t readCols(){
   int c0 = digitalRead(C0_PIN);
@@ -231,7 +281,7 @@ void setRow(uint8_t rowIdx) {
   digitalWrite(REN_PIN, 1); //enable row select
 }
 
-uint32_t checkKeyPress(uint16_t keyarray) {
+uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
   std::string keysPressed = "";
   uint32_t stepSizeReturn = currentStepSize; //default if none of the if conditions are met
   switch(keyarray){
@@ -335,18 +385,73 @@ uint32_t checkKeyPress(uint16_t keyarray) {
       noteMessage[0] = noteMessage[0];
       noteMessage[1] = noteMessage[1];
       noteMessage[2] = noteMessage[2];
+      break;
   }
   
   xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
   keysPressedVol = keysPressed;
   xSemaphoreGive(keyPressedVolMutex);
+
+
+  //get knob rotations
+  //first get knobs AB
+  uint8_t localCurrentKnob_0 = k4 >> 2;
+  uint8_t localCurrentKnob_1 = k4 & 0b11;
+  uint8_t localCurrentKnob_2 = k3 >> 2;
+  uint8_t localCurrentKnob_3 = k3 & 0b11;
+  //then update rotations
+  knob_0.knobdecoder(localCurrentKnob_0);
+  knob_0.set_previous_position(localCurrentKnob_0);
+  knob_1.knobdecoder(localCurrentKnob_1);
+  knob_1.set_previous_position(localCurrentKnob_1);
+  knob_2.knobdecoder(localCurrentKnob_2);
+  knob_2.set_previous_position(localCurrentKnob_2);
+  knob_3.knobdecoder(localCurrentKnob_3);
+  knob_3.set_previous_position(localCurrentKnob_3);
+  
+  
   return stepSizeReturn;
 }
+int8_t knob0 = 0; ///THESE 4 ONLY FOR DEBUGGING KNOB VALUES
+int8_t knob1 = 0;
+int8_t knob2 = 0;
+int8_t knob3 = 0;
 
 void sampleISR() {
+  int8_t knobsrot[4];
+  knobsrot[0] = knob_0.get_knob_position();
+  //knobsrot[1] = knob_1.get_knob_position();
+  //knobsrot[2] = knob_2.get_knob_position();
+  knobsrot[3] = knob_3.get_knob_position();
+  knob0 = knobsrot[0]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
+  knob1 = knobsrot[1]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
+  knob2 = knobsrot[2]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
+  knob3 = knobsrot[3]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
+  
   static uint32_t phaseAcc = 0;
-  phaseAcc += currentStepSize;
-  uint8_t outValue = (phaseAcc >> 24) >> (8 - knob_3.get_knob_position()/2);
+  uint32_t loccurrentStepSize = currentStepSize;
+  
+  //OCTAVES IMPLEMENTED ON KNOB 0
+  if (knobsrot[0]>=0){
+    loccurrentStepSize = loccurrentStepSize << (uint32_t) round(knobsrot[0]/2);
+  }
+  else{
+    loccurrentStepSize = loccurrentStepSize >> (uint32_t) round(-1*knobsrot[0]/2);
+  }
+
+  //NOTE DISTORTION "WHAMMY BAR" ON X-AXIS JOYSTICK
+  uint8_t distortResolution = 5; //how many frequency levels within the distortion there are (higher val -> fewer levels)
+  uint8_t distortRange = 4; //how far joystick distorts the note
+
+  double freqAdjust = pow(2,1/12) * (joyValues[0]/distortResolution) * distortRange ; //frequency change between current note and next/prev 2 notes
+  if (loccurrentStepSize!=0){ //gets rid of clicking when using joystick without pressing key
+    loccurrentStepSize += calcPhaseStep(freqAdjust);
+  }
+  
+  phaseAcc += loccurrentStepSize;
+  uint8_t outValue;
+  
+  outValue = (phaseAcc >> 24) >> (8 - knobsrot[3]/2);
   analogWrite(OUTR_PIN, outValue);
 }
 
@@ -399,20 +504,24 @@ void scanKeysTask(void * pvParameters) {
     vTaskDelayUntil( &xLastWakeTime, xFrequency );
     // NEED TO REINCLUDE
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
-    for (int i = 0; i <= 3; i++) {
+    for (int i = 0; i <= 4; i++) {
       setRow(i);
       delayMicroseconds(3);
       keyArray[i] = readCols();
     }
+    readJoy();
+    
     uint16_t k0 = keyArray[0] << 8;
     uint8_t k1 = keyArray[1] << 4;
     uint8_t k2 = keyArray[2];
     uint16_t keysConcatenated = k0+k1+k2;
-    uint32_t localCurrentStepSize = checkKeyPress(keysConcatenated);
+    uint32_t localCurrentStepSize = checkKeyPress(keysConcatenated, keyArray[3], keyArray[4]);
+
     xQueueSend( msgOutQ, (char*) noteMessage, portMAX_DELAY);
-    uint8_t localCurrentKnob_3 = keyArray[3] & 0x3;
-    knob_3.knobdecoder(localCurrentKnob_3);
-    knob_3.set_previous_position(localCurrentKnob_3);
+    
+    //uint8_t localCurrentKnob_3 = keyArray[3] & 0x3;
+    //knob_3.knobdecoder(localCurrentKnob_3);
+    //knob_3.set_previous_position(localCurrentKnob_3);
     __atomic_store_n(&currentStepSize, localCurrentStepSize, __ATOMIC_RELAXED); // ensures atomic operation
     xSemaphoreGive(keyArrayMutex);
   }
@@ -428,22 +537,26 @@ void displayUpdateTask(void * pvParameters) {
     u8g2.clearBuffer();         // clear the internal memory
     u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
     u8g2.drawStr(2, 10, keysPressedVol.c_str()); // write something to the internal memory
-    u8g2.sendBuffer();          // transfer internal memory to the display
+    //u8g2.sendBuffer();          // transfer internal memory to the display
 
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
 
-    u8g2.clearBuffer();         // clear the internal memory
+    //u8g2.clearBuffer();         // clear the internal memory
     u8g2.setCursor(2, 30);      // set coordinates to print result
     u8g2.print(keyArray[0], HEX);
     u8g2.print(keyArray[1], HEX);
     u8g2.print(keyArray[2], HEX);
     xSemaphoreGive(keyArrayMutex);
     xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
-    u8g2.print(knob_3.get_previous_value(), HEX);
-    u8g2.print(knob_3.get_knob_position(), HEX);
-    u8g2.sendBuffer();          // transfer internal memory to the display
+    
+    u8g2.setCursor(90,30);       // set coordinates to print knob values
+    u8g2.print((int)round(knob0/2),DEC);
+    u8g2.print(knob1,DEC);
+    u8g2.print(knob2,DEC);
+    u8g2.print(knob3,DEC);
+    //u8g2.sendBuffer();          // transfer internal memory to the display
 
-    u8g2.clearBuffer();
+    //u8g2.clearBuffer();
     u8g2.setCursor(64, 30);
     u8g2.print((char*) noteMessage);
     u8g2.sendBuffer();
