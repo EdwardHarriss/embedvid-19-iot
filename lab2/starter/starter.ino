@@ -387,7 +387,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
       noteMessage[2] = noteMessage[2];
       break;
   }
-  
+
   xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
   keysPressedVol = keysPressed;
   xSemaphoreGive(keyPressedVolMutex);
