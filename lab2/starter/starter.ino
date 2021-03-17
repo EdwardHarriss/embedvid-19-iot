@@ -146,6 +146,12 @@ void setOutMuxBit(const uint8_t bitIdx, const bool value) {
   digitalWrite(REN_PIN, LOW);
 }
 
+knob knob_0;
+knob knob_1;
+knob knob_2;
+knob knob_3;
+
+
 void setup() {
   // put your setup code here, to run once:
 
@@ -177,7 +183,8 @@ void setup() {
   keyArrayMutex = xSemaphoreCreateMutex();
   keyPressedVolMutex = xSemaphoreCreateMutex();
 
-  
+  knob_0.set_lower_limit(-8);
+  knob_0.set_upper_limit(8);
 
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
@@ -237,10 +244,6 @@ const double ones = pow(2, 32);
 const uint32_t stepSizes [] = {calcPhaseStep(261.63), calcPhaseStep(277.18), calcPhaseStep(293.66), calcPhaseStep(311.13), calcPhaseStep(329.63), calcPhaseStep(349.23), calcPhaseStep(369.99), calcPhaseStep(392.00), calcPhaseStep(415.30), calcPhaseStep(440.00), calcPhaseStep(466.16), calcPhaseStep(493.88)};
 volatile uint32_t currentStepSize;
 
-knob knob_0;
-knob knob_1;
-knob knob_2;
-knob knob_3;
 
 volatile uint8_t keyArray[7];
 
@@ -299,8 +302,8 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
   knob_2.set_previous_position(localCurrentKnob_2);
   knob_3.knobdecoder(localCurrentKnob_3);
   knob_3.set_previous_position(localCurrentKnob_3);
-  int8_t octave = knob_0.get_knob_position();
-  octave = (octave/2) + 4;
+  int8_t octave = (knob_0.get_knob_position()/2)+4; //to get octave, divide knob0 position by 2 and add 4
+  //octave = (octave/2) + 8;
   char o [1];
   itoa(octave, o, 16);
   switch(keyarray){
@@ -552,7 +555,7 @@ void displayUpdateTask(void * pvParameters) {
     xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
     
     u8g2.setCursor(90,30);       // set coordinates to print knob values
-    u8g2.print((int)round(knob0/2),DEC);
+    u8g2.print((int)round(knob0/2)+4,DEC);
     u8g2.print(knob1,DEC);
     u8g2.print(knob2,DEC);
     u8g2.print(knob3,DEC);
