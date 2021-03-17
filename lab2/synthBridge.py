@@ -2,9 +2,9 @@ import serial
 import paho.mqtt.client as mqtt
 import re
 
-SER_PORT = ""
-GROUP_NAME = ""
-MY_NAME = ""
+SER_PORT = "/dev/tty.usbmodem14203"
+GROUP_NAME = "Embedvid-19"
+MY_NAME = "Matt"
 BROKER_URL = "test.mosquitto.org"
 BROKER_PORT = 1883
 
@@ -28,6 +28,7 @@ try:
 	ser = serial.Serial(SER_PORT, 115200, timeout=1)
 except:
 	print("Could not open serial port")
+	
 	quit()
 
 #Connect to broker
