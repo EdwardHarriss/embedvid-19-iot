@@ -205,7 +205,7 @@ const uint32_t stepSizes [] = {calcPhaseStep(261.63), calcPhaseStep(277.18), cal
 volatile uint32_t currentStepSize;
 knob knob_3;
 volatile uint8_t keyArray[7];
-volatile char noteMessage[] = "    ";
+volatile char noteMessage[] = "   ";
 std::string keysPressedVol = "";
 const char intToHex[] = "0123456789ABCDEF";
 
