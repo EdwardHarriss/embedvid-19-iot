@@ -12,11 +12,46 @@ class knob {
     int8_t upper_limit;
     int8_t lower_limit;
     int8_t prevrot = 0;
+    bool buttonState;
+    bool toggleMode; //sets it to push/release default
+    bool prevButtonPress; //to stop value from toggling non-stop when button is held down a little too long
+
   public:
     knob() {
       knobposition = 0;
       upper_limit = 16;
       lower_limit = -16;
+      buttonState=0;
+      toggleMode = 0;
+    }
+
+    bool get_buttonState(){
+      return buttonState;
+    }
+
+    void setToggle(bool setter){
+      if (setter==1){
+        toggleMode = 1; //sets it to toggle rather than push/release
+      }
+      if (setter ==0){
+        toggleMode = 0;
+      }
+    }
+    void update_buttonState(bool currButtonVal){
+      bool pressed = !currButtonVal; //button values are 1 while not pressed, 0 while pressed, so just flipping it
+      //toggleMode = 1; //for testing
+      if (toggleMode ==1){
+        if (pressed==1){
+          if (prevButtonPress!= 1){ //stops value from non-stop toggling when held down
+             buttonState= !buttonState;
+          }
+        }
+        prevButtonPress = pressed;
+      }
+      
+      else if (toggleMode == 0){
+        buttonState = pressed; //if not toggle mode set, button value = whether it is currently pressed or not
+      }
     }
 
     int8_t get_knob_position() {
@@ -84,11 +119,11 @@ class knob {
         rotation = 1;
         prevrot = 1;
       }
-      if ((knobposition > upper_limit) && (rotation == 1)) {
+      if ((knobposition >= upper_limit) && (rotation == 1)) {
         knobposition = upper_limit;
         return;
       }
-      if ((knobposition < lower_limit) && (rotation == -1)) {
+      if ((knobposition <= lower_limit) && (rotation == -1)) {
         knobposition = lower_limit;
         return;
       }
@@ -152,6 +187,7 @@ knob knob_2;
 knob knob_3;
 
 
+
 void setup() {
   // put your setup code here, to run once:
 
@@ -183,9 +219,11 @@ void setup() {
   keyArrayMutex = xSemaphoreCreateMutex();
   keyPressedVolMutex = xSemaphoreCreateMutex();
 
+  //set limits and button toggle rules for knobs:
   knob_0.set_lower_limit(-8);
   knob_0.set_upper_limit(8);
-
+  knob_3.setToggle(1); //SEND/RECEIVE MODE TOGGLES ON BUTTON 3
+  
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
   sampleTimer->setOverflow(22000, HERTZ_FORMAT);
@@ -244,10 +282,13 @@ const double ones = pow(2, 32);
 const uint32_t stepSizes [] = {calcPhaseStep(261.63), calcPhaseStep(277.18), calcPhaseStep(293.66), calcPhaseStep(311.13), calcPhaseStep(329.63), calcPhaseStep(349.23), calcPhaseStep(369.99), calcPhaseStep(392.00), calcPhaseStep(415.30), calcPhaseStep(440.00), calcPhaseStep(466.16), calcPhaseStep(493.88)};
 volatile uint32_t currentStepSize;
 
-
 volatile uint8_t keyArray[7];
+volatile int32_t joyValues[3]; //{x, y, pressed}
 
-volatile int32_t joyValues[2]; //{x, y}
+volatile bool receiveMode;
+volatile int8_t octave; //distinguishing between current set octave and received octave from message
+volatile int8_t octaveOwn;
+volatile int8_t octaveRec;
 
 volatile char noteMessage[] = "   ";
 std::string keysPressedVol = "";
@@ -255,6 +296,15 @@ const char intToHex[] = "0123456789ABCDEF";
 
 int32_t calcPhaseStep(int32_t freq) { //TODO: implement octaves
   return round((freq * ones) / fs);
+}
+
+void setOctave(){ //sets the octave dependi ng on send or receive mode
+  if (receiveMode == 0){ // send mode - uses own set octave
+    octave = octaveOwn;
+  }
+  else{
+    octave = octaveRec; //receive mode - uses received octave
+  }
 }
 
 void readJoy(){
@@ -265,6 +315,7 @@ void readJoy(){
   int yMap = -1*(joyy - 440);
   joyValues[0] = xMap/10; //ranges from -38 -> 36 (left to right)
   joyValues[1] = yMap/10; //ranges from -40 -> 34 (bottom to top)
+  //joystick press is updated in checkKeyPresses
 }
 
 uint8_t readCols(){
@@ -284,10 +335,15 @@ void setRow(uint8_t rowIdx) {
   digitalWrite(REN_PIN, 1); //enable row select
 }
 
-uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
+void updateKeyboardRules(bool b0, bool b1, bool b2, bool b3, bool bjoy){//update modes like send/receive, ect
+  receiveMode = b3;
+}
+
+uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uint8_t k6) {
   std::string keysPressed = "";
   uint32_t stepSizeReturn = currentStepSize; //default if none of the if conditions are met
-    //get knob rotations
+  
+  //get knob rotations
   //first get knobs AB
   uint8_t localCurrentKnob_0 = k4 >> 2;
   uint8_t localCurrentKnob_1 = k4 & 0b11;
@@ -302,10 +358,37 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
   knob_2.set_previous_position(localCurrentKnob_2);
   knob_3.knobdecoder(localCurrentKnob_3);
   knob_3.set_previous_position(localCurrentKnob_3);
-  int8_t octave = (knob_0.get_knob_position()/2)+4; //to get octave, divide knob0 position by 2 and add 4
+  if (receiveMode ==0){
+    octaveOwn = round((knob_0.get_knob_position()/2)+4); //to get set keyboard octave, divide knob0 position by 2 and add 4
+  }
+  
+
+  //check button positions
+  uint8_t button_0 = k6 & 0b1;
+  uint8_t button_1 = k6 & 0b10;
+  uint8_t button_2 = k5 & 0b1;
+  uint8_t button_3 = k5 & 0b10;
+  knob_0.update_buttonState(button_0);
+  knob_1.update_buttonState(button_1);
+  knob_2.update_buttonState(button_2);
+  knob_3.update_buttonState(button_3);
+  //check joystick button
+  uint8_t button_joy = (k5 & 0b100) >> 2;
+  joyValues[2] = !button_joy;
+
+  //update keyboard rules e.g. send/receive mode, vibrato, etc.
+  updateKeyboardRules(knob_0.get_buttonState(), knob_1.get_buttonState(), knob_2.get_buttonState(), knob_3.get_buttonState(), joyValues[2]);
+  
+  //Serial.println(button_0);
+  
   //octave = (octave/2) + 8;
+  
+  setOctave(); // sets either local octave or octave of received message
   char o [1];
   itoa(octave, o, 16);
+
+  //getting pressed keys
+  if (receiveMode ==0){
   switch(keyarray){
      case 0xFFF:
        stepSizeReturn = 0;
@@ -409,24 +492,27 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4) {
       noteMessage[2] = noteMessage[2];
       break;
   }
+  
 
   xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
   keysPressedVol = keysPressed;
   xSemaphoreGive(keyPressedVolMutex);
   
-  
+  }
   return stepSizeReturn;
 }
 int8_t knob0 = 0; ///THESE 4 ONLY FOR DEBUGGING KNOB VALUES
-int8_t knob1 = 0;
-int8_t knob2 = 0;
-int8_t knob3 = 0;
+int8_t knob1 = 0; ///THESE 4 ONLY FOR DEBUGGING KNOB VALUES
+int8_t knob2 = 0; ///THESE 4 ONLY FOR DEBUGGING KNOB VALUES
+int8_t knob3 = 0; ///THESE 4 ONLY FOR DEBUGGING KNOB VALUES
+
+int counter = 0;
 
 void sampleISR() {
   int8_t knobsrot[4];
   knobsrot[0] = knob_0.get_knob_position();
-  //knobsrot[1] = knob_1.get_knob_position();
-  //knobsrot[2] = knob_2.get_knob_position();
+  knobsrot[1] = knob_1.get_knob_position();
+  knobsrot[2] = knob_2.get_knob_position();
   knobsrot[3] = knob_3.get_knob_position();
   knob0 = knobsrot[0]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
   knob1 = knobsrot[1]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
@@ -435,13 +521,14 @@ void sampleISR() {
   
   static uint32_t phaseAcc = 0;
   uint32_t loccurrentStepSize = currentStepSize;
-  
-  //OCTAVES IMPLEMENTED ON KNOB 0
-  if (knobsrot[0]>=0){
-    loccurrentStepSize = loccurrentStepSize << (uint32_t) round((knobsrot[0])/2);
+
+  setOctave(); // sets either local octave or octave of received message
+  //OCTAVES IMPLEMENTED ON KNOB 0 | also implements changing of octave based on incoming message
+  if (octave>=4){
+    loccurrentStepSize = loccurrentStepSize << (uint32_t) (octave-4);
   }
   else{
-    loccurrentStepSize = loccurrentStepSize >> (uint32_t) round(-1*(knobsrot[0])/2);
+    loccurrentStepSize = loccurrentStepSize >> (uint32_t) (-1*(octave-4));
   }
 
   //NOTE DISTORTION "WHAMMY BAR" ON X-AXIS JOYSTICK
@@ -456,19 +543,57 @@ void sampleISR() {
   phaseAcc += loccurrentStepSize;
   uint8_t outValue;
   
-  outValue = (phaseAcc >> 24) >> (8 - knobsrot[3]/2);
+  /*uint8_t outValue2;
+
+  //for (int i=0; i<2; i++){
+   // outValues[i] = (phaseAccArr[i] >> 24) >> (8-knobsrot[3]/2);
+  }*/
+  
+  outValue = (phaseAcc >> 24)>> (8 - knobsrot[3]/2);
   analogWrite(OUTR_PIN, outValue);
+  //TYLER - trying to implement multiple freqs/varying freqs over time
+  /*outValue2 = ((phaseAcc+10000000) >> 24)>> (8 - knobsrot[3]/2);
+  
+  if (counter ==0){
+    analogWrite(OUTR_PIN, outValue);
+    //Serial.println(phaseAcc);
+    counter++;
+  }
+  else{
+    analogWrite(OUTR_PIN, outValue2);
+    //Serial.println("alternative");
+    counter = 0;
+  }
+  
+  //analogWrite(OUTL_PIN, outValue);
+
+
+  
+  //uint8_t outvaluevec[1] = {calcPhaseStep(261.63)};
+  //, calcPhaseStep(277.18), calcPhaseStep(293.66), calcPhaseStep(311.13), calcPhaseStep(329.63), calcPhaseStep(349.23), calcPhaseStep(369.99), calcPhaseStep(392.00), calcPhaseStep(415.30), calcPhaseStep(440.00), calcPhaseStep(466.16), calcPhaseStep(493.88)};
+  //for (int i=0; i<1; i++){
+  //  outValue = (outvaluevec[i] >> 24) >> (8 - knobsrot[3]/2);
+  //  analogWrite(OUTR_PIN, outValue);
+  //}
+  //outValue = calcPhaseStep(261.63) >> 24;
+  
+  //for (int j=0; j<2; j++){
+  //analogWrite(OUTR_PIN, outValue);
+  //}
+  */
+  
 }
 
 void msgOutTask(void *pvParameters) {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
   char outMsg[4];
-  while (1) {
-    vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    xQueueReceive(msgOutQ, outMsg, portMAX_DELAY);
-    Serial.println(outMsg);
-  }
+    while (1) {
+     vTaskDelayUntil(&xLastWakeTime, xFrequency);
+     xQueueReceive(msgOutQ, outMsg, portMAX_DELAY);
+     Serial.println(outMsg);
+   }
+  
 }
 
 void msgInTask(void *pvParameters) {
@@ -486,11 +611,12 @@ void msgInTask(void *pvParameters) {
       else {
         placement = 0;
         if (inMsg[0] == 'R') {
-          __atomic_store_n(&currentStepSize, currentStepSize, __ATOMIC_RELAXED);
+          __atomic_store_n(&currentStepSize, 0, __ATOMIC_RELAXED);
         }
         else if (inMsg[0] == 'P') {
           std::string key_in = "";
           //write something here that changes the octave of incoming stuff.
+          octaveRec = ((uint8_t) inMsg[1]) - 48; //takes value from ASCII int to int
           key_in.push_back(inMsg[2]);
           __atomic_store_n(&currentStepSize, stepSizes[std::stoi(key_in, 0, 16)], __ATOMIC_RELAXED);
         }
@@ -510,18 +636,20 @@ void scanKeysTask(void * pvParameters) {
     vTaskDelayUntil( &xLastWakeTime, xFrequency );
     // NEED TO REINCLUDE
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
-    for (int i = 0; i <= 4; i++) {
+    for (int i = 0; i <= 6; i++) {
       setRow(i);
       delayMicroseconds(3);
       keyArray[i] = readCols();
     }
     readJoy();
     
+    //getting notes:
     uint16_t k0 = keyArray[0] << 8;
     uint8_t k1 = keyArray[1] << 4;
     uint8_t k2 = keyArray[2];
     uint16_t keysConcatenated = k0+k1+k2;
-    uint32_t localCurrentStepSize = checkKeyPress(keysConcatenated, keyArray[3], keyArray[4]);
+    //checking key presses, knob rotations, etc
+    uint32_t localCurrentStepSize = checkKeyPress(keysConcatenated, keyArray[3], keyArray[4], keyArray[5], keyArray[6]);
 
     xQueueSend( msgOutQ, (char*) noteMessage, portMAX_DELAY);
     
@@ -543,26 +671,45 @@ void displayUpdateTask(void * pvParameters) {
     u8g2.clearBuffer();         // clear the internal memory
     u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
     u8g2.drawStr(2, 10, keysPressedVol.c_str()); // write something to the internal memory
-    //u8g2.sendBuffer();          // transfer internal memory to the display
 
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
 
-    //u8g2.clearBuffer();         // clear the internal memory
+    
     u8g2.setCursor(2, 30);      // set coordinates to print result
     u8g2.print(keyArray[0], HEX);
     u8g2.print(keyArray[1], HEX);
     u8g2.print(keyArray[2], HEX);
     xSemaphoreGive(keyArrayMutex);
     xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
+
+
+    std::string octaveString = std::to_string(octave);
+    u8g2.drawStr(90, 10, octaveString.c_str()); // write something to the internal memory
     
     u8g2.setCursor(90,30);       // set coordinates to print knob values
+    
     u8g2.print((int)round(knob0/2)+4,DEC);
     u8g2.print(knob1,DEC);
     u8g2.print(knob2,DEC);
     u8g2.print(knob3,DEC);
-    //u8g2.sendBuffer();          // transfer internal memory to the display
 
-    //u8g2.clearBuffer();
+    u8g2.setCursor(70,20);
+    u8g2.print(joyValues[2]);
+
+    u8g2.setCursor(90,20); //print button values
+    u8g2.print(knob_0.get_buttonState());
+    u8g2.print(knob_1.get_buttonState());
+    u8g2.print(knob_2.get_buttonState());
+    std::string sendReceive;
+    if (receiveMode==1){
+      sendReceive = "R";
+    }
+    else{
+      sendReceive = "S";
+    }
+    u8g2.drawStr(108, 20, sendReceive.c_str());
+    //u8g2.print(sendReceive);
+
     u8g2.setCursor(64, 30);
     u8g2.print((char*) noteMessage);
     u8g2.sendBuffer();
