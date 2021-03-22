@@ -140,6 +140,9 @@ class LFO {
       counterprev = 0;
       counter_incr = 1;
     }
+    void set_max(int newsetmax){ //function only ever called from setup() so no need to protect range of values like others below
+      max_val = newsetmax; 
+    }
     void change_max(int maxvalchange){
       int new_max = max_val + maxvalchange;
       if ((new_max >=0)&&(new_max<10000)){
@@ -163,6 +166,7 @@ class LFO {
       counter = 0;
       counterprev =0;
       counter_incr = 1;
+      max_val = 100;
     }
     int get_counter(){
       return counter;
@@ -235,7 +239,8 @@ knob knob_1;
 knob knob_2;
 knob knob_3;
 
-LFO lfo;
+LFO lfoVib; //fully customizable
+LFO lfoTrem; //no options, just standard variation of volume
 
 void setup() {
   // put your setup code here, to run once:
@@ -272,7 +277,10 @@ void setup() {
   knob_0.set_lower_limit(-8);
   knob_0.set_upper_limit(8);
   knob_0.setToggle(1); //VIBRATO MODE TOGGLES ON BUTTON 0
+  knob_1.setToggle(1); //TREMOLO MODE TOGGLES ON BUTTON 1
   knob_3.setToggle(1); //SEND/RECEIVE MODE TOGGLES ON BUTTON 3
+
+  lfoTrem.set_max(50);
   
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
@@ -347,6 +355,7 @@ volatile int32_t joyValues[3]; //{x, y, pressed}
 //modal functionalities, updated by updateKeyboardRules function
 volatile bool receiveMode;
 volatile bool vibratoMode;
+volatile bool tremoloMode;
 
 volatile int8_t octave; //distinguishing between current set octave and received octave from message
 volatile int8_t octaveOwn;
@@ -399,6 +408,7 @@ void setRow(uint8_t rowIdx) {
 
 void updateKeyboardRules(bool b0, bool b1, bool b2, bool b3, bool bjoy){//update modes like send/receive, ect
   vibratoMode = b0;
+  tremoloMode = b1;
   receiveMode = b3;
   
 }
@@ -425,7 +435,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   if (receiveMode ==0){
     octaveOwn = round((knob_0.get_knob_position()/2)+4); //to get set keyboard octave, divide knob0 position by 2 and add 4
   }
-  lfo.change_max(knob_1.get_knob_position()/5);
+  lfoVib.change_max(knob_1.get_knob_position()/3);
 
   //check button positions
   uint8_t button_0 = k6 & 0b1;
@@ -441,7 +451,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   joyValues[2] = !button_joy; //sets the correct button value for joystick
 
   if (joyValues[2] == 1){ //reset lfo if vibrato goes too far, and you don't want to spend all the time winding it back
-    lfo.reset_counter();
+    lfoVib.reset_counter();
   }
 
   //update keyboard rules e.g. send/receive mode, vibrato, etc.
@@ -594,7 +604,7 @@ void sampleISR() {
 
   if (vibratoMode ==1){
     if (loccurrentStepSize !=0){//stops clicking when no note is pressed and vibrato is on
-      loccurrentStepSize+= lfo.get_counter()*100000; //100000 could be a parameter we change to get a wider/smaller range - shouldn't need to though as this can be done by protected variables in LFO class
+      loccurrentStepSize+= lfoVib.get_counter()*100000; //100000 could be a parameter we change to get a wider/smaller range - shouldn't need to though as this can be done by protected variables in LFO class
     }
   }
   
@@ -626,8 +636,15 @@ void sampleISR() {
   //for (int i=0; i<2; i++){
    // outValues[i] = (phaseAccArr[i] >> 24) >> (8-knobsrot[3]/2);
   }*/
+
+  int volAdjust = 8-knobsrot[3]/2;
+  if (tremoloMode ==1){
+    if(loccurrentStepSize!=0){
+     volAdjust += (lfoTrem.get_counter()/25); 
+    }
+  }
   
-  outValue = (phaseAcc >> 24)>> (8 - knobsrot[3]/2);
+  outValue = (phaseAcc >> 24)>> volAdjust;
   analogWrite(OUTR_PIN, outValue);
   //TYLER - trying to implement multiple freqs/varying freqs over time
   /*outValue2 = ((phaseAcc+10000000) >> 24)>> (8 - knobsrot[3]/2);
@@ -720,7 +737,7 @@ void scanKeysTask(void * pvParameters) {
       keyArray[i] = readCols();
     }
     readJoy(); //get joystick x and y values
-    lfo.change_counterIncr(round(joyValues[1]/30));
+    lfoVib.change_counterIncr(round(joyValues[1]/30));
     
     //getting notes:
     uint16_t k0 = keyArray[0] << 8;
@@ -775,9 +792,26 @@ void displayUpdateTask(void * pvParameters) {
     u8g2.setCursor(70,20);
     u8g2.print(joyValues[2]);
 
-    u8g2.setCursor(90,20); //print button values
-    u8g2.print(knob_0.get_buttonState());
-    u8g2.print(knob_1.get_buttonState());
+    //PRINT BUTTON VALUES
+    std::string vibrato;
+    if (vibratoMode==1){
+      vibrato = "V";
+    }
+    else{
+      vibrato = "0";
+    }
+    u8g2.drawStr(88, 20, vibrato.c_str());
+    std::string tremolo;
+    if (tremoloMode==1){
+      tremolo = "T";
+    }
+    else{
+      tremolo = "0";
+    }
+    u8g2.drawStr(96, 20, tremolo.c_str());
+    //u8g2.print(knob_0.get_buttonState());
+    //u8g2.print(knob_1.get_buttonState());
+    u8g2.setCursor(102,20);
     u8g2.print(knob_2.get_buttonState());
     std::string sendReceive;
     if (receiveMode==1){
@@ -787,7 +821,6 @@ void displayUpdateTask(void * pvParameters) {
       sendReceive = "S";
     }
     u8g2.drawStr(108, 20, sendReceive.c_str());
-    //u8g2.print(sendReceive);
 
     u8g2.setCursor(64, 30);
     u8g2.print((char*) noteMessage);
@@ -803,7 +836,8 @@ void LFOTask(void *pvParameters) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
     while (1) {
      vTaskDelayUntil(&xLastWakeTime, xFrequency);
-     lfo.update_counter();
+     lfoVib.update_counter();
+     lfoTrem.update_counter();
      
      /*if ((LFOcounter == 0)||((LFOcounter>LFOcounterprev)&&(LFOcounter<LFO_MAX))){
       LFOcounterprev = LFOcounter; 
@@ -814,7 +848,7 @@ void LFOTask(void *pvParameters) {
       LFOcounter--;
      }*/
      //LFOcounter++;
-     Serial.println(lfo.get_counter());
+     //Serial.println(lfoVib.get_counter());
    } 
 }
 
