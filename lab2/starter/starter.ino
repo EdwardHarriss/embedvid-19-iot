@@ -56,6 +56,10 @@ class knob {
     int8_t get_knob_position() {
       return knobposition;
     }
+    void reset_knob_position(){
+      knobposition =0;
+      knobpreviousvalue = 0;
+    }
     uint8_t get_previous_value() {
       return knobpreviousvalue;
     }
@@ -452,6 +456,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
 
   if (joyValues[2] == 1){ //reset lfo if vibrato goes too far, and you don't want to spend all the time winding it back
     lfoVib.reset_counter();
+    knob_1.reset_knob_position();
   }
 
   //update keyboard rules e.g. send/receive mode, vibrato, etc.
