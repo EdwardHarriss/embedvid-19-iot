@@ -24,12 +24,10 @@ class knob {
       buttonState=0;
       toggleMode = 0;
     }
-    
     bool get_buttonState(){
       return buttonState;
     }
-
-    void setToggle(bool setter){
+    void setToggle(bool setter){ //called in the setup() function, sets buttons to toggle rather than push/release
       if (setter==1){
         toggleMode = 1; //sets it to toggle rather than push/release
       }
@@ -38,7 +36,7 @@ class knob {
       }
     }
     void update_buttonState(bool currButtonVal){
-      bool pressed = !currButtonVal; //button values are 1 while not pressed, 0 while pressed, so just flipping it
+      bool pressed = !currButtonVal; //button values are normally 1 while not pressed, 0 while pressed, so this is just flipping it
       //toggleMode = 1; //for testing
       if (toggleMode ==1){
         if (pressed==1){
@@ -130,43 +128,39 @@ class knob {
     }
 };
 
-class LFO {
+class LFO {//LOW FREQUENCY OSCILLATOR CLASS 
+  //there are 2 of these objects implemented: one of these for controlling the incrementing/decrementing counter that is added to the output frequency for vibrato
+  //and one for the counter added to amplitude for tremolo
   private:
-    int max_val;
+    int max_val; //counter ranges from 0 to max_val when incrementing/decrementing
     int counter;
-    int counterprev;
-    int counter_incr;
-    //bool increasing; //to tell whether counter should be increasing or decreasing
+    int counterprev; //helps determine when the counter is increasing vs decreasing, amd whether to increment or decrement the counter value next
+    int counter_incr; //integer that determines the value to add/subtract from counter when increasing/decreasing - essentially sets the speed for the fluctuation of the LFO
+    
   public:
-    LFO() {
+    LFO() {//default values for fluctuation
       max_val = 100;
       counter = 0;
       counterprev = 0;
       counter_incr = 1;
     }
-    void set_max(int newsetmax){ //function only ever called from setup() so no need to protect range of values like others below
+    void set_max(int newsetmax){ //function only ever called from setup() 
       max_val = newsetmax; 
     }
-    void change_max(int maxvalchange){
+    void change_max(int maxvalchange){ //max_val is only ever changed via adding or subtracting from the max value (by knob_1)
       int new_max = max_val + maxvalchange;
-      if ((new_max >=0)&&(new_max<10000)){
+      if ((new_max >=0)&&(new_max<10000)){ //puts upper limit on fluctuation range
          max_val = new_max;
       }
-      /*if (counter_incr > (1/2)*max_val){ //case where range is increased, then incr is increased, then range is decreased again
-        counter_incr = 1/2*max_val;
-      }*/
     }
-    void change_counterIncr(int incr_change){
+    void change_counterIncr(int incr_change){//changes speed at which counter counts up and down (therfore speed of fluctuation in freq)
       int new_counter_incr = counter_incr + incr_change;
       if ((!(new_counter_incr > max_val/4))&&(!(new_counter_incr<=0))){ //cant have the increment too large or small otherwise it doesn't work
         counter_incr = new_counter_incr;
       }
       
     }
-    void set_counterIncr(int new_incr){ //may not need this function - reevalute at the end
-      counter_incr = new_incr;
-    }
-    void reset_counter(){
+    void reset_counter(){//used when the joystick button is pressed - resets vibrato settings
       counter = 0;
       counterprev =0;
       counter_incr = 1;
@@ -178,7 +172,7 @@ class LFO {
     int get_incr(){
       return counter_incr;
     }
-    void update_counter(){
+    void update_counter(){ //increments/decrements counter
       if ((counter <= 0)||((counter>counterprev)&&(counter<max_val))){
         counterprev = counter; 
         counter+=counter_incr;
@@ -294,7 +288,7 @@ void setup() {
   knob_3.setToggle(1); //SEND/RECEIVE MODE TOGGLES ON BUTTON 3
   knob_3.set_lower_limit(0); //setting min volume
 
-  lfoTrem.set_max(50);
+  lfoTrem.set_max(50);//sets fixed range for tremelo mode
   
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
@@ -364,7 +358,7 @@ const uint32_t stepSizes [] = {calcPhaseStep(261.63), calcPhaseStep(277.18), cal
 volatile uint32_t currentStepSize;
 
 volatile uint8_t keyArray[7];
-volatile int32_t joyValues[3]; //{x, y, pressed}
+volatile int32_t joyValues[3]; //{x, y, joystick pressed}
 
 //modal functionalities, updated by updateKeyboardRules function
 volatile bool receiveMode;
@@ -372,14 +366,14 @@ volatile bool vibratoMode;
 volatile bool tremoloMode;
 
 volatile int8_t octave; //distinguishing between current set octave and received octave from message
-volatile int8_t octaveOwn;
-volatile int8_t octaveRec;
+volatile int8_t octaveOwn; //this is the octave being played on the keys (set by knob_0)
+volatile int8_t octaveRec; //this is the received octave from a message 
 
 volatile char noteMessage[] = "   ";
 std::string keysPressedVol = "";
 const char intToHex[] = "0123456789ABCDEF";
 
-int32_t calcPhaseStep(int32_t freq) { //TODO: implement octaves
+int32_t calcPhaseStep(int32_t freq) { 
   return round((freq * ones) / fs);
 }
 
@@ -392,15 +386,18 @@ void setOctave(){ //sets the octave depending on send or receive mode
   }
 }
 
-void readJoy(){
+void readJoy(){//reads joystick x and y values and places them in the global variables in joyValues array
   int joyx = analogRead(JOYX_PIN);
   int joyy = analogRead(JOYY_PIN);
   //inputs are inverted
-  int xMap = -1*(joyx - 545); 
-  int yMap = -1*(joyy - 440);
-  joyValues[0] = xMap/10; //ranges from -38 -> 36 (left to right)
-  joyValues[1] = yMap/10; //ranges from -40 -> 34 (bottom to top)
-  //joystick press is updated in checkKeyPresses, hence is protected by keyArrayMutex
+  int xMap = -1*(joyx - 545); //normally left numbers are positive, right numbers are negative so that inverts that
+  int yMap = -1*(joyy - 440); //same concept as above 
+  joyValues[0] = xMap/10; //makes the read values range from -38 -> 36 (left to right) rather than 10* that
+  joyValues[1] = yMap/10; //ranges from -40 -> 34 (bottom to top) ^ same idea as above
+
+  //those last 2 lines may need a semaphore to protect? maybe? or atomic store?
+  
+  //joystick button press is updated in checkKeyPresses, hence is protected by keyArrayMutex
 }
 
 uint8_t readCols(){
@@ -420,10 +417,10 @@ void setRow(uint8_t rowIdx) {
   digitalWrite(REN_PIN, 1); //enable row select
 }
 
-void updateKeyboardRules(bool b0, bool b1, bool b2, bool b3, bool bjoy){//update modes like send/receive, ect
+void updateKeyboardRules(bool b0, bool b1, bool b2, bool b3, bool bjoy){//update modes like vibrato, tremolo, FUTURE:chorus,etc
   __atomic_store_n(&vibratoMode, b0, __ATOMIC_RELAXED);
   __atomic_store_n(&tremoloMode, b1, __ATOMIC_RELAXED);
-  //receiveMode = b3; //didn't make sense to have a mode you needed to set yourself
+  //receiveMode = b3; //didn't make sense to have a send/receive mode you needed to set yourself - bad according to spec
   
 }
 
@@ -432,13 +429,13 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   uint32_t stepSizeReturn = currentStepSize; //default if none of the if conditions are met
   
   //get knob rotations
-  //first get knobs AB
+  //first get knobs AB values from the keyArray values passed into this function
   uint8_t localCurrentKnob_0 = k4 >> 2;
   uint8_t localCurrentKnob_1 = k4 & 0b11;
   uint8_t localCurrentKnob_2 = k3 >> 2;
   uint8_t localCurrentKnob_3 = k3 & 0b11;
-  //then update rotations
   
+  //then update rotations on the knob classes
   xSemaphoreTake(knobsMutex, portMAX_DELAY);
   knob_0.knobdecoder(localCurrentKnob_0);
   knob_0.set_previous_position(localCurrentKnob_0);
@@ -449,9 +446,10 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   knob_3.knobdecoder(localCurrentKnob_3);
   knob_3.set_previous_position(localCurrentKnob_3);
   xSemaphoreGive(knobsMutex);
-  if (receiveMode ==0){
-    octaveOwn = round((knob_0.get_knob_position()/2)+4); //to get set keyboard octave, divide knob0 position by 2 and add 4
-  }
+  
+  
+  octaveOwn = round((knob_0.get_knob_position()/2)+4); //to get set keyboard octave, divide knob0 position by 2 and add 4
+  
 
   //check button positions
   uint8_t button_0 = k6 & 0b1;
@@ -463,8 +461,8 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   knob_2.update_buttonState(button_2);
   knob_3.update_buttonState(button_3);
   //check joystick button
-  uint8_t button_joy = (k5 & 0b100) >> 2;
-  joyValues[2] = !button_joy; //sets the correct button value for joystick
+  uint8_t button_joy = (k5 & 0b100) >> 2; //get button press value for joystick
+  joyValues[2] = !button_joy; //sets the correct button value for joystick (is usually 1 when not pressed and 0 when pressed, this inverts that)
 
   //distinguish which octave to use, either knob-based one or received-message-based one
   xSemaphoreTake(octaveMutex, portMAX_DELAY);
@@ -474,6 +472,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   xSemaphoreGive(octaveMutex);
 
   //getting pressed keys
+  //NEED TO ADD CASES FOR MULTIPLE KEYS
   if (receiveMode ==0){
   switch(keyarray){
      case 0xFFF:
@@ -600,7 +599,6 @@ void sampleISR() {
   locknobsrot[1] = knob_1.get_knob_position();
   locknobsrot[2] = knob_2.get_knob_position();
   locknobsrot[3] = knob_3.get_knob_position();
-  
   uint32_t loccurrentStepSize = currentStepSize;
   int32_t locjoyX = joyValues[0];
   int8_t locOctave = octave;
@@ -610,7 +608,7 @@ void sampleISR() {
   int locTremCounter = lfoTrem.get_counter();
   
   
-
+  //adjusts frequency by counter gotten from vibrato lfo 
   if (locVibMode ==1){
     if (loccurrentStepSize !=0){//stops clicking when no note is pressed and vibrato is on
       loccurrentStepSize+= locVibCounter*100000; //100000 could be a parameter we change to get a wider/smaller range - shouldn't need to though as this can be done by protected variables in LFO class
@@ -621,6 +619,7 @@ void sampleISR() {
 
   
   //OCTAVES IMPLEMENTED ON KNOB 0 | also implements changing of octave based on incoming message
+  //shifts octave up or down based on if octave is above or below 4 (the default octave)
   if (locOctave>=4){
     loccurrentStepSize = loccurrentStepSize << (uint32_t) (locOctave-4);
   }
@@ -631,7 +630,6 @@ void sampleISR() {
   //NOTE DISTORTION "WHAMMY BAR" ON X-AXIS JOYSTICK
   uint8_t distortResolution = 5; //how many frequency levels within the distortion there are (higher val -> fewer levels)
   uint8_t distortRange = 4; //how far joystick distorts the note
-
   double freqAdjust = pow(2,1/12) * (locjoyX/distortResolution) * distortRange ; //frequency change between current note and next/prev 2 notes
   if (loccurrentStepSize!=0){ //gets rid of clicking when using joystick without pressing key
     loccurrentStepSize += calcPhaseStep(freqAdjust);
@@ -641,43 +639,17 @@ void sampleISR() {
   uint8_t outValue;
 
   int volAdjust = 8-locknobsrot[3]/2;
+  //implementation of tremolo adjusting volume from counter gotten from tremolo lfo
   if (locTremMode ==1){
     if(loccurrentStepSize!=0){
      volAdjust += (locTremCounter/25); 
     }
   }
+
+  //writes phase step to output pin
   outValue = (phaseAcc >> 24)>> volAdjust;
   analogWrite(OUTR_PIN, outValue);
-  
-  /*outValue2 = ((phaseAcc+10000000) >> 24)>> (8 - knobsrot[3]/2);
-  
-  if (counter ==0){
-    analogWrite(OUTR_PIN, outValue);
-    //Serial.println(phaseAcc);
-    counter++;
-  }
-  else{
-    analogWrite(OUTR_PIN, outValue2);
-    //Serial.println("alternative");
-    counter = 0;
-  }
-  
-  //analogWrite(OUTL_PIN, outValue);
-
-
-  
-  //uint8_t outvaluevec[1] = {calcPhaseStep(261.63)};
-  //, calcPhaseStep(277.18), calcPhaseStep(293.66), calcPhaseStep(311.13), calcPhaseStep(329.63), calcPhaseStep(349.23), calcPhaseStep(369.99), calcPhaseStep(392.00), calcPhaseStep(415.30), calcPhaseStep(440.00), calcPhaseStep(466.16), calcPhaseStep(493.88)};
-  //for (int i=0; i<1; i++){
-  //  outValue = (outvaluevec[i] >> 24) >> (8 - knobsrot[3]/2);
-  //  analogWrite(OUTR_PIN, outValue);
-  //}
-  //outValue = calcPhaseStep(261.63) >> 24;
-  
-  //for (int j=0; j<2; j++){
-  //analogWrite(OUTR_PIN, outValue);
-  //}
-  */
+ 
   
 }
 
@@ -754,16 +726,16 @@ void scanKeysTask(void * pvParameters) {
     //update required functional values based on all keyboard element changes detected
 
     //update vibrato LFO:
-    lfoVib.change_counterIncr(round(joyValues[1]/30));
-    lfoVib.change_max(knob_1.get_knob_position()/3);
-    if (joyValues[2] == 1){ //reset lfo if vibrato goes too far, and you don't want to spend all the time winding it back
+    lfoVib.change_counterIncr(round(joyValues[1]/30));//updates vibrato speed based on joystick Y input 
+    lfoVib.change_max(knob_1.get_knob_position()/3);//updates vibrato range based on knob_1 rotational position
+    if (joyValues[2] == 1){ //reset lfo by clicking joystick button if vibrato goes too far, and you don't want to spend all the time winding it back
       lfoVib.reset_counter();
       knob_1.reset_knob_position();
     }
 
     
 
-    //update keyboard rules e.g. send/receive mode, vibrato, etc.
+    //update keyboard rules based on button values e.g. send/receive mode, vibrato, etc.
     updateKeyboardRules(knob_0.get_buttonState(), knob_1.get_buttonState(), knob_2.get_buttonState(), knob_3.get_buttonState(), joyValues[2]);
   
     xQueueSend( msgOutQ, (char*) noteMessage, portMAX_DELAY);
@@ -907,16 +879,6 @@ void LFOTask(void *pvParameters) {
      vTaskDelayUntil(&xLastWakeTime, xFrequency);
      lfoVib.update_counter();
      lfoTrem.update_counter();
-     
-     /*if ((LFOcounter == 0)||((LFOcounter>LFOcounterprev)&&(LFOcounter<LFO_MAX))){
-      LFOcounterprev = LFOcounter; 
-      LFOcounter++;
-     }
-     else if((LFOcounter == LFO_MAX)||(LFOcounter < LFOcounterprev)){
-      LFOcounterprev = LFOcounter;
-      LFOcounter--;
-     }*/
-     //LFOcounter++;
      //Serial.println(lfoVib.get_counter());
    } 
 }
