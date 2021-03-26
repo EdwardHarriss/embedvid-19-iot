@@ -4,7 +4,7 @@ Buttons:
 - Knob 0: VIBRATO TOGGLE (customizable with other buttons, see below)
 - Knob 1: TREMOLO TOGGLE (non-customizable)
 - Knob 2: ___
-- Knob 3: SEND/RECEIVE MODE TOGGLE
+- Knob 3: ___ (REMOVED SEND/RECEIVE MODE - reading the spec, it would've lost marks - now the send/receive mode is automatically triggered by Pxx and Rxx Serial messages)
 
 Knobs:
 - Knob 0: Octave
@@ -33,10 +33,9 @@ TREMOLO:
 
 SEND/RECEIVE MODE:
 - toggles between sending data and receiving data
-- no notes will play when playing keys if the board is on Receive mode
-- Octave played (number at the very top) is determined by whether board is in send or receive mode; if in send then it will be the octave determined by knob 0, if in receive mode it will be determined by the octave part of the message it receives 
-- You can see this difference as the number at the very top of the board graphics is the octave that the board will play, whereas the left-hand number on the knob rotation row (2nd row) is the octave determined by knob 0 (these numbers will match when in send mode, not in receive mode)
-- Uou can test this out by using serial input on the serial monitor
+- no notes will play when playing keys if the board is on Receive mode (any time between receiving a Pxx and an Rxx)
+- Octave played is determined by whether board is in send or receive mode; if in send then it will be the octave determined by knob 0, if in receive mode it will be determined by the octave part of the message it receives 
+- You can test this out by using serial input on the serial monitor
 
 
 
@@ -48,13 +47,14 @@ SEND/RECEIVE MODE:
 - Vibrato
 - Tremelo
 - Low Frequency Oscillator
+- Nice graphics
+- Mostly protected(?)
 
 ---
 
 ## Todo 
 
 - Tidy Code
-
 - Sound link
 
 - Waveform selector
