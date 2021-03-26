@@ -438,6 +438,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   uint8_t localCurrentKnob_2 = k3 >> 2;
   uint8_t localCurrentKnob_3 = k3 & 0b11;
   //then update rotations
+  
   xSemaphoreTake(knobsMutex, portMAX_DELAY);
   knob_0.knobdecoder(localCurrentKnob_0);
   knob_0.set_previous_position(localCurrentKnob_0);
@@ -451,7 +452,6 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   if (receiveMode ==0){
     octaveOwn = round((knob_0.get_knob_position()/2)+4); //to get set keyboard octave, divide knob0 position by 2 and add 4
   }
-  lfoVib.change_max(knob_1.get_knob_position()/3);
 
   //check button positions
   uint8_t button_0 = k6 & 0b1;
@@ -466,15 +466,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   uint8_t button_joy = (k5 & 0b100) >> 2;
   joyValues[2] = !button_joy; //sets the correct button value for joystick
 
-  if (joyValues[2] == 1){ //reset lfo if vibrato goes too far, and you don't want to spend all the time winding it back
-    lfoVib.reset_counter();
-    knob_1.reset_knob_position();
-  }
-
-  //update keyboard rules e.g. send/receive mode, vibrato, etc.
-  updateKeyboardRules(knob_0.get_buttonState(), knob_1.get_buttonState(), knob_2.get_buttonState(), knob_3.get_buttonState(), joyValues[2]);
-  
-  
+  //distinguish which octave to use, either knob-based one or received-message-based one
   xSemaphoreTake(octaveMutex, portMAX_DELAY);
   setOctave(); // sets either local octave or octave of received message
   char o [1];
@@ -595,14 +587,9 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   }
   return stepSizeReturn;
 }
-int8_t knob0 = 0; ///THESE 4 ONLY FOR DEBUGGING KNOB VALUES
-int8_t knob1 = 0; ///THESE 4 ONLY FOR DEBUGGING KNOB VALUES
-int8_t knob2 = 0; ///THESE 4 ONLY FOR DEBUGGING KNOB VALUES
-int8_t knob3 = 0; ///THESE 4 ONLY FOR DEBUGGING KNOB VALUES
 
-//volatile int LFOcounter = 0; //used as the value for LFO - currently implemented as a triangle wave 
-//volatile int LFOcounterprev = 0;
-//const int LFO_MAX = 100;
+
+//int n =0;
 
 void sampleISR() {
 
@@ -613,11 +600,6 @@ void sampleISR() {
   locknobsrot[1] = knob_1.get_knob_position();
   locknobsrot[2] = knob_2.get_knob_position();
   locknobsrot[3] = knob_3.get_knob_position();
-  
-  knob0 = locknobsrot[0]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
-  knob1 = locknobsrot[1]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
-  knob2 = locknobsrot[2]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
-  knob3 = locknobsrot[3]; ///                DEBUGINGGGGGGGGGGGGGGGGGGGGGGGGG
   
   uint32_t loccurrentStepSize = currentStepSize;
   int32_t locjoyX = joyValues[0];
@@ -664,7 +646,6 @@ void sampleISR() {
      volAdjust += (locTremCounter/25); 
     }
   }
-  
   outValue = (phaseAcc >> 24)>> volAdjust;
   analogWrite(OUTR_PIN, outValue);
   
@@ -727,7 +708,6 @@ void msgInTask(void *pvParameters) {
       else {
         placement = 0;
         if (inMsg[0] == 'R') {
-          //receiveMode =0;
           __atomic_store_n(&receiveMode, 0, __ATOMIC_RELAXED);
           __atomic_store_n(&currentStepSize, 0, __ATOMIC_RELAXED);
           
@@ -762,16 +742,30 @@ void scanKeysTask(void * pvParameters) {
       keyArray[i] = readCols();
     }
     readJoy(); //get joystick x and y values - also protected by keyArrayMutex
-    lfoVib.change_counterIncr(round(joyValues[1]/30));
     
     //getting notes:
     uint16_t k0 = keyArray[0] << 8;
     uint8_t k1 = keyArray[1] << 4;
     uint8_t k2 = keyArray[2];
     uint16_t keysConcatenated = k0+k1+k2;
-    //checking key presses, knob rotations, etc
+    //checking key presses, knob rotations, etc performed inside checkKeyPress()
     uint32_t localCurrentStepSize = checkKeyPress(keysConcatenated, keyArray[3], keyArray[4], keyArray[5], keyArray[6]);
 
+    //update required functional values based on all keyboard element changes detected
+
+    //update vibrato LFO:
+    lfoVib.change_counterIncr(round(joyValues[1]/30));
+    lfoVib.change_max(knob_1.get_knob_position()/3);
+    if (joyValues[2] == 1){ //reset lfo if vibrato goes too far, and you don't want to spend all the time winding it back
+      lfoVib.reset_counter();
+      knob_1.reset_knob_position();
+    }
+
+    
+
+    //update keyboard rules e.g. send/receive mode, vibrato, etc.
+    updateKeyboardRules(knob_0.get_buttonState(), knob_1.get_buttonState(), knob_2.get_buttonState(), knob_3.get_buttonState(), joyValues[2]);
+  
     xQueueSend( msgOutQ, (char*) noteMessage, portMAX_DELAY);
     
    
