@@ -2,13 +2,13 @@
 
 Buttons:
 - Knob 0: VIBRATO TOGGLE (customizable with other buttons, see below)
-- Knob 1: TREMOLO TOGGLE (non-customizable)
-- Knob 2: ___
-- Knob 3: ___ (REMOVED SEND/RECEIVE MODE - reading the spec, it would've lost marks - now the send/receive mode is automatically triggered by Pxx and Rxx Serial messages)
+- Knob 1: ___
+- Knob 2: TREMOLO TOGGLE (non-customizable)
+- Knob 3: SUSTAIN MODE
 
 Knobs:
-- Knob 0: Octave
-- Knob 1: VIBRATO RANGE
+- Knob 0: VIBRATO RANGE CHANGE
+- Knob 1: 
 - Knob 2: ___
 - Knob 3: Volume
 
