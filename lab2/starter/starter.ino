@@ -281,11 +281,12 @@ void setup() {
   modesMutex = xSemaphoreCreateMutex();
 
   //set limits and button toggle rules for knobs:
-  knob_0.set_lower_limit(-8);
-  knob_0.set_upper_limit(8);
+  knob_2.set_lower_limit(-8);
+  knob_2.set_upper_limit(8);
   knob_0.setToggle(1); //VIBRATO MODE TOGGLES ON BUTTON 0
-  knob_1.setToggle(1); //TREMOLO MODE TOGGLES ON BUTTON 1
-  knob_3.setToggle(1); //SEND/RECEIVE MODE TOGGLES ON BUTTON 3
+  knob_0.set_upper_limit(16);
+  knob_0.set_lower_limit(-16);
+  knob_2.setToggle(1); //TREMOLO MODE TOGGLES ON BUTTON 2
   knob_3.set_lower_limit(0); //setting min volume
 
   lfoTrem.set_max(50);//sets fixed range for tremelo mode
@@ -341,6 +342,15 @@ void setup() {
     4,
     &LFOTaskHandle );
 
+    TaskHandle_t SustainCounterTaskHandle = NULL;
+  xTaskCreate(
+    SustainCounterTask,
+    "SustainCounterTask",
+    8,
+    NULL,
+    4,
+    &SustainCounterTaskHandle );
+
   msgOutQ = xQueueCreate( 8, 4 );
 
   //Initialise UART
@@ -364,6 +374,8 @@ volatile int32_t joyValues[3]; //{x, y, joystick pressed}
 volatile bool receiveMode;
 volatile bool vibratoMode;
 volatile bool tremoloMode;
+volatile bool sustainMode;
+volatile int sustainCounter;
 
 volatile int8_t octave; //distinguishing between current set octave and received octave from message
 volatile int8_t octaveOwn; //this is the octave being played on the keys (set by knob_0)
@@ -420,6 +432,13 @@ void setRow(uint8_t rowIdx) {
 void updateKeyboardRules(bool b0, bool b1, bool b2, bool b3, bool bjoy){//update modes like vibrato, tremolo, FUTURE:chorus,etc
   __atomic_store_n(&vibratoMode, b0, __ATOMIC_RELAXED);
   __atomic_store_n(&tremoloMode, b1, __ATOMIC_RELAXED);
+  __atomic_store_n(&sustainMode, b3, __ATOMIC_RELAXED);
+  
+  
+  if (b3==0) {
+    sustainCounter = 0;
+  }
+  
   //receiveMode = b3; //didn't make sense to have a send/receive mode you needed to set yourself - bad according to spec
   
 }
@@ -448,7 +467,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   xSemaphoreGive(knobsMutex);
   
   
-  octaveOwn = round((knob_0.get_knob_position()/2)+4); //to get set keyboard octave, divide knob0 position by 2 and add 4
+  octaveOwn = round((knob_2.get_knob_position()/2)+4); //to get set keyboard octave, divide knob0 position by 2 and add 4
   
 
   //check button positions
@@ -474,12 +493,19 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   //getting pressed keys
   //NEED TO ADD CASES FOR MULTIPLE KEYS
   if (receiveMode ==0){
+    bool isKeyPressed;
   switch(keyarray){
      case 0xFFF:
-       stepSizeReturn = 0;
+       if (!sustainMode){ //SUSTAIN MODE IMPLEMENTATION - only udates note with 0 if sustain mode is not on
+          stepSizeReturn = 0;
+       }
+       else{
+          stepSizeReturn = currentStepSize;
+       }
        noteMessage[0] = 'R';
        noteMessage[1] = noteMessage[1];
        noteMessage[2] = noteMessage[2];
+       isKeyPressed = 0;
       break;
     case 0xEFF:
       keysPressed += 'C';
@@ -487,6 +513,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[0];
+      isKeyPressed = 1;
       break;
     case 0xDFF:
       keysPressed += 'C';
@@ -495,6 +522,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[1];
+      isKeyPressed = 1;
       break;
     case 0xBFF:
       keysPressed += 'D';
@@ -502,6 +530,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[2];
+      isKeyPressed = 1;
       break;
     case 0x7FF:
       keysPressed += 'E';
@@ -510,6 +539,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[3];
+      isKeyPressed = 1;
       break;
     case 0xFEF:
       keysPressed += 'E';
@@ -517,6 +547,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[4];
+      isKeyPressed = 1;
       break;
     case 0xFDF:
       keysPressed += 'F';
@@ -524,6 +555,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[5];
+      isKeyPressed = 1;
       break;
     case 0xFBF:
       keysPressed += 'F';
@@ -532,6 +564,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[6];
+      isKeyPressed = 1;
       break;
     case 0xF7F:
       keysPressed += 'G';
@@ -539,6 +572,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[7];
+      isKeyPressed = 1;
       break;
     case 0xFFE:
       keysPressed += 'G';
@@ -547,6 +581,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[8];
+      isKeyPressed = 1;
       break;
     case 0xFFD:
       keysPressed += 'A';
@@ -554,6 +589,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[9];
+      isKeyPressed = 1;
       break;
     case 0xFFB:
       keysPressed += 'B';
@@ -562,6 +598,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[10];
+      isKeyPressed = 1;
       break;
     case 0xFF7:
       keysPressed += 'B';
@@ -569,22 +606,30 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       noteMessage[0] = 'P';
       noteMessage[1] = o[0];
       noteMessage[2] = intToHex[11];
+      isKeyPressed = 1;
       break;
     default:
       stepSizeReturn = stepSizeReturn;
       noteMessage[0] = noteMessage[0];
       noteMessage[1] = noteMessage[1];
       noteMessage[2] = noteMessage[2];
+      //isKeyPressed = 0;
       break;
+
   }
-  
+  if (isKeyPressed==1){
+        sustainCounter = 6;
+      }
 
   xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
   keysPressedVol = keysPressed;
   xSemaphoreGive(keyPressedVolMutex);
   
   }
+  
   return stepSizeReturn;
+ 
+  
 }
 
 
@@ -616,8 +661,6 @@ void sampleISR() {
   }
   
   
-
-  
   //OCTAVES IMPLEMENTED ON KNOB 0 | also implements changing of octave based on incoming message
   //shifts octave up or down based on if octave is above or below 4 (the default octave)
   if (locOctave>=4){
@@ -648,6 +691,10 @@ void sampleISR() {
 
   //writes phase step to output pin
   outValue = (phaseAcc >> 24)>> volAdjust;
+  int sustainAtten =  6 -(int)round(sustainCounter);
+  if (sustainMode&&(currentStepSize!=0)){
+    outValue = outValue >> sustainAtten;
+  }
   analogWrite(OUTR_PIN, outValue);
  
   
@@ -727,7 +774,7 @@ void scanKeysTask(void * pvParameters) {
 
     //update vibrato LFO:
     lfoVib.change_counterIncr(round(joyValues[1]/30));//updates vibrato speed based on joystick Y input 
-    lfoVib.change_max(knob_1.get_knob_position()/3);//updates vibrato range based on knob_1 rotational position
+    lfoVib.change_max(knob_0.get_knob_position()/3);//updates vibrato range based on knob_1 rotational position
     if (joyValues[2] == 1){ //reset lfo by clicking joystick button if vibrato goes too far, and you don't want to spend all the time winding it back
       lfoVib.reset_counter();
       knob_1.reset_knob_position();
@@ -782,7 +829,7 @@ void displayUpdateTask(void * pvParameters) {
      u8g2.print(lfoVib.get_incr(),DEC); //////////////////MAY NEED SEMAPHORE
      u8g2.drawStr(2,30,"Range: ");
      std::string rangeChange;
-     int change = (int)round(knob_1.get_knob_position()/5); //for some reason % wasn't working?
+     int change = (int)round(knob_0.get_knob_position()/5); 
      switch(change){
         case 1:
           rangeChange = "+";
@@ -856,7 +903,7 @@ void displayUpdateTask(void * pvParameters) {
     //ROTATION LEFTOVERS (could replace message being sent with these)
     xSemaphoreTake(knobsMutex, portMAX_DELAY);
     u8g2.setCursor(80,20);       // set coordinates to print knob values
-    u8g2.print(knob_2.get_knob_position(),DEC);
+    u8g2.print(sustainCounter,DEC);
     xSemaphoreGive(knobsMutex);
 
     //BUTTON LEFTOVERS
@@ -880,6 +927,17 @@ void LFOTask(void *pvParameters) {
      lfoVib.update_counter();
      lfoTrem.update_counter();
      //Serial.println(lfoVib.get_counter());
+   } 
+}
+
+void SustainCounterTask(void *pvParameters) {
+  const TickType_t xFrequency = 600 / portTICK_PERIOD_MS;
+  TickType_t xLastWakeTime = xTaskGetTickCount();
+    while (1) {
+     vTaskDelayUntil(&xLastWakeTime, xFrequency);
+     if ((sustainCounter>0)&&(sustainMode)){
+      sustainCounter--;
+     }
    } 
 }
 
