@@ -431,7 +431,7 @@ void setRow(uint8_t rowIdx) {
 
 void updateKeyboardRules(bool b0, bool b1, bool b2, bool b3, bool bjoy){//update modes like vibrato, tremolo, FUTURE:chorus,etc
   __atomic_store_n(&vibratoMode, b0, __ATOMIC_RELAXED);
-  __atomic_store_n(&tremoloMode, b1, __ATOMIC_RELAXED);
+  __atomic_store_n(&tremoloMode, b2, __ATOMIC_RELAXED);
   __atomic_store_n(&sustainMode, b3, __ATOMIC_RELAXED);
   
   
@@ -439,7 +439,6 @@ void updateKeyboardRules(bool b0, bool b1, bool b2, bool b3, bool bjoy){//update
     sustainCounter = 0;
   }
   
-  //receiveMode = b3; //didn't make sense to have a send/receive mode you needed to set yourself - bad according to spec
   
 }
 
@@ -777,7 +776,7 @@ void scanKeysTask(void * pvParameters) {
     lfoVib.change_max(knob_0.get_knob_position()/3);//updates vibrato range based on knob_1 rotational position
     if (joyValues[2] == 1){ //reset lfo by clicking joystick button if vibrato goes too far, and you don't want to spend all the time winding it back
       lfoVib.reset_counter();
-      knob_1.reset_knob_position();
+      knob_0.reset_knob_position();
     }
 
     
