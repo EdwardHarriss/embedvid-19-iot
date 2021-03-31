@@ -219,12 +219,14 @@ U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2(U8G2_R0);
 
 //Function to set outputs via matrix
 SemaphoreHandle_t keyArrayMutex;
+SemaphoreHandle_t keysPressedVolMutex;
 SemaphoreHandle_t knobsMutex;
 SemaphoreHandle_t octaveMutex;
 SemaphoreHandle_t lfoMutex;
 SemaphoreHandle_t stepSizeMutex;
 SemaphoreHandle_t joyMutex;
 SemaphoreHandle_t modeMutex;
+
 
 QueueHandle_t msgOutQ;
 
@@ -277,12 +279,14 @@ void setup() {
   //mycode
 
   keyArrayMutex = xSemaphoreCreateMutex();
+  keysPressedVolMutex = xSemaphoreCreateMutex();
   knobsMutex = xSemaphoreCreateMutex();
   octaveMutex = xSemaphoreCreateMutex();
   lfoMutex = xSemaphoreCreateMutex();
   stepSizeMutex = xSemaphoreCreateMutex();
   joyMutex = xSemaphoreCreateMutex();
   modeMutex = xSemaphoreCreateMutex();
+
 
   //set limits and button toggle rules for knobs:
   knob_2.set_lower_limit(-6);
