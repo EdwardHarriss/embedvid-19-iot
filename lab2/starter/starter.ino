@@ -219,6 +219,7 @@ U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2(U8G2_R0);
 
 //Function to set outputs via matrix
 SemaphoreHandle_t keyArrayMutex;
+SemaphoreHandle_t keysPressedVolMutex;
 SemaphoreHandle_t knobsMutex;
 SemaphoreHandle_t octaveMutex;
 SemaphoreHandle_t lfoMutex;
@@ -277,6 +278,7 @@ void setup() {
   //mycode
 
   keyArrayMutex = xSemaphoreCreateMutex();
+  keysPressedVolMutex = xSemaphoreCreateMutex();
   knobsMutex = xSemaphoreCreateMutex();
   octaveMutex = xSemaphoreCreateMutex();
   lfoMutex = xSemaphoreCreateMutex();
@@ -628,9 +630,9 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
         sustainCounter = 6;
       }
 
-  xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);
+  xSemaphoreTake(keysPressedVolMutex, portMAX_DELAY);
   keysPressedVol = keysPressed;
-  xSemaphoreGive(keyPressedVolMutex);
+  xSemaphoreGive(keysPressedVolMutex);
   
   }
   
@@ -831,7 +833,7 @@ void displayUpdateTask(void * pvParameters) {
     u8g2.drawStr(40,10,"Trem: ");
     std::string vibrato;
     std::string tremolo;
-    xSemaphoreTake(modesMutex, portMAX_DELAY);
+    xSemaphoreTake(modeMutex, portMAX_DELAY);
     if (vibratoMode==1){
       u8g2.drawDisc(26, 6, 3, U8G2_DRAW_ALL);
     }
@@ -844,7 +846,7 @@ void displayUpdateTask(void * pvParameters) {
     else{
       u8g2.drawCircle(75, 6, 3, U8G2_DRAW_ALL);
     }
-    xSemaphoreGive(modesMutex);
+    xSemaphoreGive(modeMutex);
 
     //VIBRATO OPTIONS - SPEED AND RANGE
      u8g2.setFont(u8g2_font_blipfest_07_tr);
@@ -897,11 +899,11 @@ void displayUpdateTask(void * pvParameters) {
     
     
     //KEY PRESSED:
-    xSemaphoreTake(keyPressedVolMutex, portMAX_DELAY);       
+    xSemaphoreTake(keysPressedVolMutex, portMAX_DELAY);       
     u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
     u8g2.drawStr(40,20,"Key: ");
     u8g2.drawStr(66, 20, keysPressedVol.c_str()); // write note
-    xSemaphoreGive(keyPressedVolMutex);
+    xSemaphoreGive(keysPressedVolMutex);
 
     //SERIAL MESSAGE SENT (could take out)
     u8g2.setFont(u8g2_font_ncenR08_tr);
@@ -912,14 +914,14 @@ void displayUpdateTask(void * pvParameters) {
     //SEND VS RECEIVE MODE (if it is between receiving a Pxx and Rxx over serial)
     u8g2.drawStr(95,30,"S/R: ");
     std::string sendReceive;
-    xSemaphoreTake(modesMutex, portMAX_DELAY);
+    xSemaphoreTake(modeMutex, portMAX_DELAY);
     if (receiveMode==1){
       sendReceive = "R";
     }
     else{
       sendReceive = "S";
     }
-    xSemaphoreGive(modesMutex);
+    xSemaphoreGive(modeMutex);
     u8g2.drawStr(117, 30, sendReceive.c_str());
 
     
