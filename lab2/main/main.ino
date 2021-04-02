@@ -4,189 +4,10 @@
 #include <math.h>
 #include <string.h>
 #include <vector>
+#include <knob.h>
+#include <LFO.h>
 
-
-class knob {
-  private:
-    int8_t knobposition;
-    int8_t knobpreviousvalue;
-    int8_t upper_limit;
-    int8_t lower_limit;
-    int8_t prevrot = 0;
-    bool buttonState;
-    bool toggleMode; //sets it to push/release default
-    bool prevButtonPress; //to stop value from toggling non-stop when button is held down a little too long
-  public:
-    knob() {
-      knobposition = 0;
-      upper_limit = 16;
-      lower_limit = -16;
-      buttonState=0;
-      toggleMode = 0;
-    }
-    bool get_buttonState(){
-      return buttonState;
-    }
-    void setToggle(bool setter){ //called in the setup() function, sets buttons to toggle rather than push/release
-      if (setter==1){
-        toggleMode = 1; //sets it to toggle rather than push/release
-      }
-      if (setter ==0){
-        toggleMode = 0;
-      }
-    }
-    void update_buttonState(bool currButtonVal){
-      bool pressed = !currButtonVal; //button values are normally 1 while not pressed, 0 while pressed, so this is just flipping it
-      //toggleMode = 1; //for testing
-      if (toggleMode ==1){
-        if (pressed==1){
-          if (prevButtonPress!= 1){ //stops value from non-stop toggling when held down
-             buttonState= !buttonState;
-          }
-        }
-        prevButtonPress = pressed;
-      }
-      else if (toggleMode == 0){
-        buttonState = pressed; //if not toggle mode set, button value = whether it is currently pressed or not
-      }
-    }
-
-    int8_t get_knob_position() {
-      return knobposition;
-    }
-    void reset_knob_position(){
-      knobposition =0;
-      knobpreviousvalue = 0;
-    }
-    uint8_t get_previous_value() {
-      return knobpreviousvalue;
-    }
-    void set_previous_position(uint8_t new_prev) {
-      knobpreviousvalue = new_prev;
-    }
-    void set_upper_limit(int8_t newupper){
-      upper_limit = newupper;
-    }
-    void set_lower_limit(int8_t newlower){
-      lower_limit = newlower;
-    }
-    void knobdecoder(uint8_t localCurrentKnob) {
-      int8_t rotation = 0;
-      if ((knobpreviousvalue == 0x0) && (localCurrentKnob == 0x1)) {
-        rotation = 1;
-        prevrot = 1;
-      }
-      else if ((knobpreviousvalue == 0x0) && (localCurrentKnob == 0x2)) {
-        rotation = -1;
-        prevrot = -1;
-      }
-      /*else if ((knobpreviousvalue == 0x0) && (localCurrentKnob == 0x3)) {
-        rotation = 2*prevrot;
-      }*/
-      else if ((knobpreviousvalue == 0x1) && (localCurrentKnob == 0x0)) {
-        rotation = -1;
-        prevrot = -1;
-      }
-      /*else if ((knobpreviousvalue == 0x1) && (localCurrentKnob == 0x1)) {
-        rotation = 2*prevrot;
-      }*/
-      else if ((knobpreviousvalue == 0x1) && (localCurrentKnob == 0x3)) {
-        rotation = 1;
-        prevrot = 1;
-      }
-      else if ((knobpreviousvalue == 0x2) && (localCurrentKnob== 0x0)) {
-        rotation = 1;
-        prevrot = 1;
-      }
-      /*else if ((knobpreviousvalue == 0x2) && (localCurrentKnob == 0x1)) {
-        rotation = 2*prevrot;
-      }*/
-      else if ((knobpreviousvalue == 0x2) && (localCurrentKnob == 0x3)) {
-        rotation = -1;
-        prevrot = -1;
-      }
-      /*else if ((knobpreviousvalue == 0x3) && (localCurrentKnob == 0x0)) {
-        rotation = 2*prevrot;
-      }*/
-      else if ((knobpreviousvalue == 0x3) && (localCurrentKnob == 0x1)) {
-        rotation = -1;
-        prevrot = -1;
-      }
-      else if ((knobpreviousvalue == 0x3) && (localCurrentKnob == 0x2)) {
-        rotation = 1;
-        prevrot = 1;
-      }
-      if ((knobposition >= upper_limit) && (rotation == 1)) {
-        knobposition = upper_limit;
-        return;
-      }
-      if ((knobposition <= lower_limit) && (rotation == -1)) {
-        knobposition = lower_limit;
-        return;
-      }
-      knobposition += rotation;
-    }
-};
-
-class LFO {//LOW FREQUENCY OSCILLATOR CLASS 
-  //there are 2 of these objects implemented: one of these for controlling the incrementing/decrementing counter that is added to the output frequency for vibrato
-  //and one for the counter added to amplitude for tremolo
-  private:
-    int max_val; //counter ranges from 0 to max_val when incrementing/decrementing
-    int counter;
-    int counterprev; //helps determine when the counter is increasing vs decreasing, amd whether to increment or decrement the counter value next
-    int counter_incr; //integer that determines the value to add/subtract from counter when increasing/decreasing - essentially sets the speed for the fluctuation of the LFO
-    
-  public:
-    LFO() {//default values for fluctuation
-      max_val = 100;
-      counter = 0;
-      counterprev = 0;
-      counter_incr = 1;
-    }
-    void set_max(int newsetmax){ //function only ever called from setup() 
-      max_val = newsetmax; 
-    }
-    void change_max(int maxvalchange){ //max_val is only ever changed via adding or subtracting from the max value (by knob_1)
-      int new_max = max_val + maxvalchange;
-      if ((new_max >=0)&&(new_max<10000)){ //puts upper limit on fluctuation range
-         max_val = new_max;
-      }
-    }
-    void change_counterIncr(int incr_change){//changes speed at which counter counts up and down (therfore speed of fluctuation in freq)
-      int new_counter_incr = counter_incr + incr_change;
-      if ((!(new_counter_incr > max_val/4))&&(!(new_counter_incr<=0))){ //cant have the increment too large or small otherwise it doesn't work
-        counter_incr = new_counter_incr;
-      }
-      
-    }
-    void reset_counter(){//used when the joystick button is pressed - resets vibrato settings
-      counter = 0;
-      counterprev =0;
-      counter_incr = 1;
-      max_val = 100;
-    }
-    int get_counter(){
-      return counter;
-    }
-    int get_incr(){
-      return counter_incr;
-    }
-    void update_counter(){ //increments/decrements counter
-      if ((counter <= 0)||((counter>counterprev)&&(counter<max_val))){
-        counterprev = counter; 
-        counter+=counter_incr;
-     }
-      else if((counter >= max_val)||(counter < counterprev)){
-        counterprev = counter;
-        counter-=counter_incr;
-     }
-    }
-    
-    
-};
 //Pin definitions
-
 //Row select and enable
 const int RA0_PIN = D3;
 const int RA1_PIN = D6;
@@ -298,7 +119,7 @@ void setup() {
   knob_1.set_lower_limit(0);
 
   lfoTrem.set_max(50);//sets fixed range for tremelo mode
-  
+
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
   sampleTimer->setOverflow(22000, HERTZ_FORMAT);
@@ -366,7 +187,6 @@ void setup() {
   Serial.println("Hello World");
 
   vTaskStartScheduler();
-
 }
 
 //MY CODE BEGINS HERE:
@@ -389,18 +209,17 @@ volatile int sustainCounter;
 
 volatile int8_t octave; //distinguishing between current set octave and received octave from message
 volatile int8_t octaveOwn; //this is the octave being played on the keys (set by knob_0)
-volatile int8_t octaveRec; //this is the received octave from a message 
+volatile int8_t octaveRec; //this is the received octave from a message
 
 volatile char noteMessage[] = "   ";
 std::string keysPressedVol = "";
 const char intToHex[] = "0123456789ABCDEF";
 
-int32_t calcPhaseStep(int32_t freq) { 
+int32_t calcPhaseStep(int32_t freq) {
   return round((freq * ones) / fs);
 }
 
 void setOctave(){ //sets the octave depending on send or receive mode
- 
   bool recModeloc;
   __atomic_store_n(&recModeloc, receiveMode, __ATOMIC_RELAXED);
   if (recModeloc == 0){ // send mode - uses own set octave
@@ -416,12 +235,11 @@ void readJoy(){//reads joystick x and y values and places them in the global var
   int joyy = analogRead(JOYY_PIN);
   //inputs are inverted
   int xMap = -1*(joyx - 545); //normally left numbers are positive, right numbers are negative so that inverts that
-  int yMap = -1*(joyy - 440); //same concept as above 
+  int yMap = -1*(joyy - 440); //same concept as above
   uint32_t valX = xMap/10;
   uint32_t valY = yMap/10;
   __atomic_store_n(&joyValues[0], valX, __ATOMIC_RELAXED);
   __atomic_store_n(&joyValues[1], valY, __ATOMIC_RELAXED);
-  
   //joystick button press is updated in checkKeyPresses, hence is protected by keyArrayMutex
 }
 
@@ -446,28 +264,25 @@ void updateKeyboardRules(bool b0, bool b1, bool b2, bool b3, bool bjoy){//update
   __atomic_store_n(&vibratoMode, b0, __ATOMIC_RELAXED);
   __atomic_store_n(&tremoloMode, b2, __ATOMIC_RELAXED);
   __atomic_store_n(&sustainMode, b3, __ATOMIC_RELAXED);
-  
-  
+
   if (b3==0) {
     sustainCounter = 0;
   }
-  
-  
 }
 
 uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uint8_t k6) {
-  
+
   std::string keysPressed = "";
   uint32_t stepSizeReturn;
   __atomic_store_n(&stepSizeReturn, currentStepSize, __ATOMIC_RELAXED);//default if none of the if conditions are met
-  
+
   //get knob rotations
   //first get knobs AB values from the keyArray values passed into this function
   uint8_t localCurrentKnob_0 = k4 >> 2;
   uint8_t localCurrentKnob_1 = k4 & 0b11;
   uint8_t localCurrentKnob_2 = k3 >> 2;
   uint8_t localCurrentKnob_3 = k3 & 0b11;
-  
+
   //then update rotations on the knob classes
   xSemaphoreTake(knobsMutex, portMAX_DELAY);
   knob_0.knobdecoder(localCurrentKnob_0);
@@ -479,7 +294,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   knob_3.knobdecoder(localCurrentKnob_3);
   knob_3.set_previous_position(localCurrentKnob_3);
   xSemaphoreGive(knobsMutex);
-  
+
   xSemaphoreTake(octaveMutex, portMAX_DELAY);
   octaveOwn = round((knob_2.get_knob_position()/2)+4); //to get set keyboard octave, divide knob0 position by 2 and add 4
   xSemaphoreGive(octaveMutex);
@@ -500,7 +315,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   xSemaphoreTake(joyMutex, portMAX_DELAY);
   joyValues[2] = !button_joy; //sets the correct button value for joystick (is usually 1 when not pressed and 0 when pressed, this inverts that)
   xSemaphoreGive(joyMutex);
-  
+
   //distinguish which octave to use, either knob-based one or received-message-based one
   xSemaphoreTake(octaveMutex, portMAX_DELAY);
   setOctave(); // sets either local octave or octave of received message
@@ -510,7 +325,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
 
   //getting pressed keys
   //NEED TO ADD CASES FOR MULTIPLE KEYS
-  xSemaphoreTake(modeMutex, portMAX_DELAY); 
+  xSemaphoreTake(modeMutex, portMAX_DELAY);
   if (receiveMode ==0){
     bool isKeyPressed;
   switch(keyarray){
@@ -644,19 +459,11 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   xSemaphoreTake(keysPressedVolMutex, portMAX_DELAY);
   keysPressedVol = keysPressed;
   xSemaphoreGive(keysPressedVolMutex);
-  
   }
-  
   return stepSizeReturn;
- 
-  
 }
 
-
-//int n =0;
-
 void sampleISR() {
-
   static uint32_t phaseAcc = 0;
   static uint32_t wave_value = 0;
   //setting local variables
@@ -669,19 +476,17 @@ void sampleISR() {
   int32_t locjoyX = joyValues[0];
   int8_t locOctave = octave;
   bool locVibMode = vibratoMode;
-  bool locTremMode = tremoloMode; 
+  bool locTremMode = tremoloMode;
   int locVibCounter = lfoVib.get_counter();
   int locTremCounter = lfoTrem.get_counter();
-  
-  
-  //adjusts frequency by counter gotten from vibrato lfo 
+
+  //adjusts frequency by counter gotten from vibrato lfo
   if (locVibMode ==1){
     if (loccurrentStepSize !=0){//stops clicking when no note is pressed and vibrato is on
       loccurrentStepSize+= locVibCounter*100000; //100000 could be a parameter we change to get a wider/smaller range - shouldn't need to though as this can be done by protected variables in LFO class
     }
   }
-  
-  
+
   //OCTAVES IMPLEMENTED ON KNOB 0 | also implements changing of octave based on incoming message
   //shifts octave up or down based on if octave is above or below 4 (the default octave)
   if (locOctave>=4){
@@ -698,7 +503,7 @@ void sampleISR() {
   if (loccurrentStepSize!=0){ //gets rid of clicking when using joystick without pressing key
     loccurrentStepSize += calcPhaseStep(freqAdjust);
   }
-  
+
   phaseAcc += loccurrentStepSize;
   uint8_t outValue;
 
@@ -706,7 +511,7 @@ void sampleISR() {
   //implementation of tremolo adjusting volume from counter gotten from tremolo lfo
   if (locTremMode ==1){
     if(loccurrentStepSize!=0){
-     volAdjust += (locTremCounter/25); 
+     volAdjust += (locTremCounter/25);
     }
   }
 
@@ -725,7 +530,6 @@ void sampleISR() {
     }
   }
 
-
   //writes phase step to output pin
   outValue = wave_value >> volAdjust;
   int sustainAtten =  6 -(int)round(sustainCounter);
@@ -733,8 +537,6 @@ void sampleISR() {
     outValue = outValue >> sustainAtten;
   }
   analogWrite(OUTR_PIN, outValue);
- 
-  
 }
 
 void msgOutTask(void *pvParameters) {
@@ -746,7 +548,6 @@ void msgOutTask(void *pvParameters) {
      xQueueReceive(msgOutQ, outMsg, portMAX_DELAY);
      Serial.println(outMsg);
    }
-  
 }
 
 void msgInTask(void *pvParameters) {
@@ -766,7 +567,6 @@ void msgInTask(void *pvParameters) {
         if (inMsg[0] == 'R') {
           __atomic_store_n(&receiveMode, 0, __ATOMIC_RELAXED);
           __atomic_store_n(&currentStepSize, 0, __ATOMIC_RELAXED);
-          
         }
         else if (inMsg[0] == 'P') {
           __atomic_store_n(&receiveMode, 1, __ATOMIC_RELAXED);
@@ -789,7 +589,7 @@ void scanKeysTask(void * pvParameters) {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS; //initiation interval of the task (converted from time in ticks to 50ms)
   TickType_t xLastWakeTime = xTaskGetTickCount(); //stores time of last initiation
   //subsequent iterations this variable will be updated by the call to vTaskDelayUntil().
-  
+
   while (1) {
     //int32_t locJoyX, locJoyY;
     //bool locJoyButton;
@@ -805,7 +605,7 @@ void scanKeysTask(void * pvParameters) {
       keyArray[i] = readCols();
     }
     readJoy(); //get joystick x and y values
-    
+
     //getting notes:
     uint16_t k0 = keyArray[0] << 8;
     uint8_t k1 = keyArray[1] << 4;
@@ -819,32 +619,28 @@ void scanKeysTask(void * pvParameters) {
 
     //update vibrato LFO:
     xSemaphoreTake(lfoMutex, portMAX_DELAY);
-    
-    lfoVib.change_counterIncr(round(joyValues[1]/30));//updates vibrato speed based on joystick Y input 
+
+    lfoVib.change_counterIncr(round(joyValues[1]/30));//updates vibrato speed based on joystick Y input
     xSemaphoreTake(knobsMutex, portMAX_DELAY);
     lfoVib.change_max(knob_0.get_knob_position()/3);//updates vibrato range based on knob_1 rotational position
     xSemaphoreGive(knobsMutex);
     if (joyValues[2] == 1){ //reset lfo by clicking joystick button if vibrato goes too far, and you don't want to spend all the time winding it back
       lfoVib.reset_counter();
-      
+
       xSemaphoreTake(knobsMutex, portMAX_DELAY);
       knob_0.reset_knob_position();
       xSemaphoreGive(knobsMutex);
     }
-    
-    xSemaphoreGive(lfoMutex);
 
-    
+    xSemaphoreGive(lfoMutex);
 
     //update keyboard rules based on button values e.g. send/receive mode, vibrato, etc.
     xSemaphoreTake(knobsMutex, portMAX_DELAY);
     updateKeyboardRules(knob_0.get_buttonState(), knob_1.get_buttonState(), knob_2.get_buttonState(), knob_3.get_buttonState(), joyValues[2]);
     xSemaphoreGive(knobsMutex);
-    
-    
+
     xQueueSend( msgOutQ, (char*) noteMessage, portMAX_DELAY);
-    
-   
+
     __atomic_store_n(&currentStepSize, localCurrentStepSize, __ATOMIC_RELAXED); // ensures atomic operation
     xSemaphoreGive(keyArrayMutex);
   }
@@ -857,7 +653,7 @@ void displayUpdateTask(void * pvParameters) {
   while (1) {
     vTaskDelayUntil( &xLastWakeTime, xFrequency );
     u8g2.clearBuffer();
-    
+
     //VIBRATO AND TREMOLO:
     u8g2.setFont(u8g2_font_ncenR08_tr); // choose a suitable font
     u8g2.drawStr(2,10,"Vib: ");
@@ -889,13 +685,13 @@ void displayUpdateTask(void * pvParameters) {
      u8g2.drawStr(2,30,"Range: ");
      std::string rangeChange;
      xSemaphoreTake(knobsMutex, portMAX_DELAY);
-     int change = (int)round(knob_0.get_knob_position()/5); 
+     int change = (int)round(knob_0.get_knob_position()/5);
      xSemaphoreGive(knobsMutex);
      switch(change){
         case 1:
           rangeChange = "+";
           break;
-        case 2: 
+        case 2:
           rangeChange = "++";
           break;
         case 3:
@@ -904,7 +700,7 @@ void displayUpdateTask(void * pvParameters) {
         case -1:
           rangeChange = "-";
           break;
-        case -2: 
+        case -2:
           rangeChange = "--";
           break;
         case -3:
@@ -915,7 +711,6 @@ void displayUpdateTask(void * pvParameters) {
           break;
      }
      u8g2.drawStr(25, 30, rangeChange.c_str());
-       
 
     //VOLUME:
     u8g2.setFont(u8g2_font_ncenR08_tr);
@@ -932,11 +727,9 @@ void displayUpdateTask(void * pvParameters) {
     std::string octaveString = std::to_string(octave);
     xSemaphoreGive(octaveMutex);
     u8g2.drawStr(117, 20, octaveString.c_str()); // write something to the internal memory
-    
-    
-    
+
     //KEY PRESSED:
-    xSemaphoreTake(keysPressedVolMutex, portMAX_DELAY);       
+    xSemaphoreTake(keysPressedVolMutex, portMAX_DELAY);
     u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
     u8g2.drawStr(40,20,"Key: ");
     u8g2.drawStr(66, 20, keysPressedVol.c_str()); // write note
@@ -961,10 +754,8 @@ void displayUpdateTask(void * pvParameters) {
     xSemaphoreGive(modeMutex);
     u8g2.drawStr(117, 30, sendReceive.c_str());
 
-    
-    
     //ROTATION LEFTOVERS (could replace message being sent with these)
-  
+
     std::string waveform;
     xSemaphoreTake(knobsMutex, portMAX_DELAY);
     int waveformMode = knob_1.get_knob_position();
@@ -982,18 +773,14 @@ void displayUpdateTask(void * pvParameters) {
     }
     u8g2.setFont(u8g2_font_blipfest_07_tr);      // set coordinates to print knob values
     u8g2.drawStr(80, 20, waveform.c_str());
-  
 
     //BUTTON LEFTOVERS
     //u8g2.print(knob_2.get_buttonState());
     //u8g2.print(knob_3.get_buttonState());
-   
-    
 
     u8g2.sendBuffer();
     //Toggle LED
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    
   }
 }
 
@@ -1007,7 +794,7 @@ void LFOTask(void *pvParameters) {
      lfoTrem.update_counter();
      xSemaphoreGive(lfoMutex);
      //Serial.println(lfoVib.get_counter());
-   } 
+   }
 }
 
 void SustainCounterTask(void *pvParameters) {
@@ -1020,7 +807,7 @@ void SustainCounterTask(void *pvParameters) {
       sustainCounter--;
      }
      xSemaphoreGive(modeMutex);
-   } 
+   }
 }
 
 void loop() {}
