@@ -400,7 +400,10 @@ int32_t calcPhaseStep(int32_t freq) {
 }
 
 void setOctave(){ //sets the octave depending on send or receive mode
-  if (receiveMode == 0){ // send mode - uses own set octave
+ 
+  bool recModeloc;
+  __atomic_store_n(&recModeloc, receiveMode, __ATOMIC_RELAXED);
+  if (recModeloc == 0){ // send mode - uses own set octave
     __atomic_store_n(&octave, octaveOwn, __ATOMIC_RELAXED);
   }
   else{
@@ -414,10 +417,10 @@ void readJoy(){//reads joystick x and y values and places them in the global var
   //inputs are inverted
   int xMap = -1*(joyx - 545); //normally left numbers are positive, right numbers are negative so that inverts that
   int yMap = -1*(joyy - 440); //same concept as above 
-  joyValues[0] = xMap/10; //makes the read values range from -38 -> 36 (left to right) rather than 10* that
-  joyValues[1] = yMap/10; //ranges from -40 -> 34 (bottom to top) ^ same idea as above
-
-  //those last 2 lines may need a semaphore to protect? maybe? or atomic store?
+  uint32_t valX = xMap/10;
+  uint32_t valY = yMap/10;
+  __atomic_store_n(&joyValues[0], valX, __ATOMIC_RELAXED);
+  __atomic_store_n(&joyValues[1], valY, __ATOMIC_RELAXED);
   
   //joystick button press is updated in checkKeyPresses, hence is protected by keyArrayMutex
 }
@@ -453,8 +456,10 @@ void updateKeyboardRules(bool b0, bool b1, bool b2, bool b3, bool bjoy){//update
 }
 
 uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uint8_t k6) {
+  
   std::string keysPressed = "";
-  uint32_t stepSizeReturn = currentStepSize; //default if none of the if conditions are met
+  uint32_t stepSizeReturn;
+  __atomic_store_n(&stepSizeReturn, currentStepSize, __ATOMIC_RELAXED);//default if none of the if conditions are met
   
   //get knob rotations
   //first get knobs AB values from the keyArray values passed into this function
@@ -475,23 +480,27 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
   knob_3.set_previous_position(localCurrentKnob_3);
   xSemaphoreGive(knobsMutex);
   
-  
+  xSemaphoreTake(octaveMutex, portMAX_DELAY);
   octaveOwn = round((knob_2.get_knob_position()/2)+4); //to get set keyboard octave, divide knob0 position by 2 and add 4
-  
+  xSemaphoreGive(octaveMutex);
 
   //check button positions
   uint8_t button_0 = k6 & 0b1;
   uint8_t button_1 = k6 & 0b10;
   uint8_t button_2 = k5 & 0b1;
   uint8_t button_3 = k5 & 0b10;
+  xSemaphoreTake(knobsMutex, portMAX_DELAY);
   knob_0.update_buttonState(button_0);
   knob_1.update_buttonState(button_1);
   knob_2.update_buttonState(button_2);
   knob_3.update_buttonState(button_3);
+  xSemaphoreGive(knobsMutex);
   //check joystick button
   uint8_t button_joy = (k5 & 0b100) >> 2; //get button press value for joystick
+  xSemaphoreTake(joyMutex, portMAX_DELAY);
   joyValues[2] = !button_joy; //sets the correct button value for joystick (is usually 1 when not pressed and 0 when pressed, this inverts that)
-
+  xSemaphoreGive(joyMutex);
+  
   //distinguish which octave to use, either knob-based one or received-message-based one
   xSemaphoreTake(octaveMutex, portMAX_DELAY);
   setOctave(); // sets either local octave or octave of received message
@@ -501,6 +510,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
 
   //getting pressed keys
   //NEED TO ADD CASES FOR MULTIPLE KEYS
+  xSemaphoreTake(modeMutex, portMAX_DELAY); 
   if (receiveMode ==0){
     bool isKeyPressed;
   switch(keyarray){
@@ -626,6 +636,7 @@ uint32_t checkKeyPress(uint16_t keyarray, uint8_t k3, uint8_t k4, uint8_t k5,uin
       break;
 
   }
+  xSemaphoreGive(modeMutex);
   if (isKeyPressed==1){
         sustainCounter = 6;
       }
@@ -761,7 +772,9 @@ void msgInTask(void *pvParameters) {
           __atomic_store_n(&receiveMode, 1, __ATOMIC_RELAXED);
           std::string key_in = "";
           //write something here that changes the octave of incoming stuff.
+          xSemaphoreTake(octaveMutex, portMAX_DELAY);
           octaveRec = ((uint8_t) inMsg[1]) - 48; //takes value from ASCII int to int
+          xSemaphoreGive(octaveMutex);
           key_in.push_back(inMsg[2]);
           __atomic_store_n(&currentStepSize, stepSizes[std::stoi(key_in, 0, 16)], __ATOMIC_RELAXED);
         }
@@ -776,8 +789,13 @@ void scanKeysTask(void * pvParameters) {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS; //initiation interval of the task (converted from time in ticks to 50ms)
   TickType_t xLastWakeTime = xTaskGetTickCount(); //stores time of last initiation
   //subsequent iterations this variable will be updated by the call to vTaskDelayUntil().
-
+  
   while (1) {
+    //int32_t locJoyX, locJoyY;
+    //bool locJoyButton;
+    //__atomic_store_n(&locJoyX, joyValues[0], __ATOMIC_RELAXED);
+    //__atomic_store_n(&locJoyY, joyValues[1], __ATOMIC_RELAXED);
+    //__atomic_store_n(&locJoyButton, joyValues[2], __ATOMIC_RELAXED);
     vTaskDelayUntil( &xLastWakeTime, xFrequency );
     // NEED TO REINCLUDE
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
@@ -786,7 +804,7 @@ void scanKeysTask(void * pvParameters) {
       delayMicroseconds(3);
       keyArray[i] = readCols();
     }
-    readJoy(); //get joystick x and y values - also protected by keyArrayMutex
+    readJoy(); //get joystick x and y values
     
     //getting notes:
     uint16_t k0 = keyArray[0] << 8;
@@ -794,23 +812,36 @@ void scanKeysTask(void * pvParameters) {
     uint8_t k2 = keyArray[2];
     uint16_t keysConcatenated = k0+k1+k2;
     //checking key presses, knob rotations, etc performed inside checkKeyPress()
+    xSemaphoreTake(stepSizeMutex, portMAX_DELAY);
     uint32_t localCurrentStepSize = checkKeyPress(keysConcatenated, keyArray[3], keyArray[4], keyArray[5], keyArray[6]);
-
+    xSemaphoreGive(stepSizeMutex);
     //update required functional values based on all keyboard element changes detected
 
     //update vibrato LFO:
+    xSemaphoreTake(lfoMutex, portMAX_DELAY);
+    
     lfoVib.change_counterIncr(round(joyValues[1]/30));//updates vibrato speed based on joystick Y input 
+    xSemaphoreTake(knobsMutex, portMAX_DELAY);
     lfoVib.change_max(knob_0.get_knob_position()/3);//updates vibrato range based on knob_1 rotational position
+    xSemaphoreGive(knobsMutex);
     if (joyValues[2] == 1){ //reset lfo by clicking joystick button if vibrato goes too far, and you don't want to spend all the time winding it back
       lfoVib.reset_counter();
+      
+      xSemaphoreTake(knobsMutex, portMAX_DELAY);
       knob_0.reset_knob_position();
+      xSemaphoreGive(knobsMutex);
     }
+    
+    xSemaphoreGive(lfoMutex);
 
     
 
     //update keyboard rules based on button values e.g. send/receive mode, vibrato, etc.
+    xSemaphoreTake(knobsMutex, portMAX_DELAY);
     updateKeyboardRules(knob_0.get_buttonState(), knob_1.get_buttonState(), knob_2.get_buttonState(), knob_3.get_buttonState(), joyValues[2]);
-  
+    xSemaphoreGive(knobsMutex);
+    
+    
     xQueueSend( msgOutQ, (char*) noteMessage, portMAX_DELAY);
     
    
@@ -852,10 +883,14 @@ void displayUpdateTask(void * pvParameters) {
      u8g2.setFont(u8g2_font_blipfest_07_tr);
      u8g2.drawStr(2,20,"Speed: ");
      u8g2.setCursor(25, 20);
+     xSemaphoreTake(lfoMutex, portMAX_DELAY);
      u8g2.print(lfoVib.get_incr(),DEC); //////////////////MAY NEED SEMAPHORE
+     xSemaphoreGive(lfoMutex);
      u8g2.drawStr(2,30,"Range: ");
      std::string rangeChange;
+     xSemaphoreTake(knobsMutex, portMAX_DELAY);
      int change = (int)round(knob_0.get_knob_position()/5); 
+     xSemaphoreGive(knobsMutex);
      switch(change){
         case 1:
           rangeChange = "+";
@@ -886,7 +921,9 @@ void displayUpdateTask(void * pvParameters) {
     u8g2.setFont(u8g2_font_ncenR08_tr);
     u8g2.drawStr(97,10,"Vol: ");
     u8g2.setCursor(117, 10);
+    xSemaphoreTake(knobsMutex, portMAX_DELAY);
     u8g2.print(knob_3.get_knob_position(),DEC);
+    xSemaphoreGive(knobsMutex);
 
     //OCTAVE:
     u8g2.setFont(u8g2_font_ncenR08_tr);
@@ -927,9 +964,12 @@ void displayUpdateTask(void * pvParameters) {
     
     
     //ROTATION LEFTOVERS (could replace message being sent with these)
-    xSemaphoreTake(knobsMutex, portMAX_DELAY);
+  
     std::string waveform;
-    switch(knob_1.get_knob_position()){
+    xSemaphoreTake(knobsMutex, portMAX_DELAY);
+    int waveformMode = knob_1.get_knob_position();
+    xSemaphoreGive(knobsMutex);
+    switch(waveformMode){
       case(0):
         waveform = waveform_selected[0];
         break;
@@ -942,7 +982,7 @@ void displayUpdateTask(void * pvParameters) {
     }
     u8g2.setFont(u8g2_font_blipfest_07_tr);      // set coordinates to print knob values
     u8g2.drawStr(80, 20, waveform.c_str());
-    xSemaphoreGive(knobsMutex);
+  
 
     //BUTTON LEFTOVERS
     //u8g2.print(knob_2.get_buttonState());
@@ -962,8 +1002,10 @@ void LFOTask(void *pvParameters) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
     while (1) {
      vTaskDelayUntil(&xLastWakeTime, xFrequency);
+     xSemaphoreTake(lfoMutex, portMAX_DELAY);
      lfoVib.update_counter();
      lfoTrem.update_counter();
+     xSemaphoreGive(lfoMutex);
      //Serial.println(lfoVib.get_counter());
    } 
 }
@@ -973,9 +1015,11 @@ void SustainCounterTask(void *pvParameters) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
     while (1) {
      vTaskDelayUntil(&xLastWakeTime, xFrequency);
+     xSemaphoreTake(modeMutex, portMAX_DELAY);
      if ((sustainCounter>0)&&(sustainMode)){
       sustainCounter--;
      }
+     xSemaphoreGive(modeMutex);
    } 
 }
 
