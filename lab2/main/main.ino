@@ -472,11 +472,23 @@ void sampleISR() {
   locknobsrot[1] = knob_1.get_knob_position();
   locknobsrot[2] = knob_2.get_knob_position();
   locknobsrot[3] = knob_3.get_knob_position();
-  uint32_t loccurrentStepSize = currentStepSize;
-  int32_t locjoyX = joyValues[0];
-  int8_t locOctave = octave;
-  bool locVibMode = vibratoMode;
-  bool locTremMode = tremoloMode;
+  
+  uint32_t loccurrentStepSize;
+  __atomic_store_n(&loccurrentStepSize, currentStepSize, __ATOMIC_RELAXED);
+  
+  int32_t locjoyX;
+   __atomic_store_n(&locjoyX, joyValues[0], __ATOMIC_RELAXED);
+  
+  int8_t locOctave;
+  __atomic_store_n(&locOctave, octave, __ATOMIC_RELAXED);
+
+  bool locVibMode;
+  bool locTremMode;
+  bool locSustainMode;
+  __atomic_store_n(&locVibMode, vibratoMode, __ATOMIC_RELAXED);
+  __atomic_store_n(&locTremMode, tremoloMode, __ATOMIC_RELAXED);
+  __atomic_store_n(&locSustainMode, sustainMode, __ATOMIC_RELAXED);
+ 
   int locVibCounter = lfoVib.get_counter();
   int locTremCounter = lfoTrem.get_counter();
 
@@ -533,7 +545,7 @@ void sampleISR() {
   //writes phase step to output pin
   outValue = wave_value >> volAdjust;
   int sustainAtten =  6 -(int)round(sustainCounter);
-  if (sustainMode&&(currentStepSize!=0)){
+  if (locSustainMode&&(currentStepSize!=0)){
     outValue = outValue >> sustainAtten;
   }
   analogWrite(OUTR_PIN, outValue);
