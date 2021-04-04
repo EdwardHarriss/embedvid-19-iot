@@ -1,12 +1,12 @@
-##HOW TO USE
+## How To Use
 
 upload main.ino to the arduino using your favourite compiler 😁
 
-##BUTTON/KNOB MAPPING
+## Button/Knob Mapping
 
 Buttons:
 - Knob 0: VIBRATO TOGGLE (customizable with other buttons, see below)
-- Knob 1: ___
+- Knob 1: n/a
 - Knob 2: TREMOLO TOGGLE (non-customizable)
 - Knob 3: SUSTAIN MODE
 
@@ -21,5 +21,5 @@ Joystick:
 - Y movement: VIBRATO SPEED
 - Button: RESET VIBRATO OPTIONS TO DEFAULT
 
- 
+
 💘 *Ed Stott* 💘
