@@ -2,6 +2,8 @@
 
 upload main.ino to the arduino using your favourite compiler 😁
 
+mainwtest contains a file adapted to test execution times
+
 ## Button/Knob Mapping
 
 Buttons:
