@@ -6,7 +6,7 @@ upload main.ino to the arduino using your favourite compiler 😁
 
 Buttons:
 - Knob 0: VIBRATO TOGGLE (customizable with other buttons, see below)
-- Knob 1: ___
+- Knob 1: n/a
 - Knob 2: TREMOLO TOGGLE (non-customizable)
 - Knob 3: SUSTAIN MODE
 
