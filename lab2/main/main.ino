@@ -141,7 +141,7 @@ void setup() {
     "displayUpdate",
     32,
     NULL,
-    2,
+    4,
     &displayUpdateHandle );
 
   TaskHandle_t msgOutHandle = NULL;
@@ -150,7 +150,7 @@ void setup() {
     "msgOut",
     32,
     NULL,
-    4,
+    5,
     &msgOutHandle );
 
   TaskHandle_t msgInHandle = NULL;
@@ -168,7 +168,7 @@ void setup() {
     "LFOtask",
     32,
     NULL,
-    5,
+    2,
     &LFOTaskHandle );
 
     TaskHandle_t SustainCounterTaskHandle = NULL;
