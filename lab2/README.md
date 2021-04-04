@@ -22,3 +22,4 @@ Joystick:
 - Button: RESET VIBRATO OPTIONS TO DEFAULT
 
  
+💘 *Ed Stott* 💘
