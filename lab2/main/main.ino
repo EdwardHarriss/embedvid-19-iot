@@ -132,7 +132,7 @@ void setup() {
     "scanKeys", /* Text name for the task */
     64, /* Stack size in words, not bytes */
     NULL, /* Parameter passed into the task */
-    2, /* Task priority */
+    1, /* Task priority */
     &scanKeysHandle ); /* Pointer to store the task handle */
 
   TaskHandle_t displayUpdateHandle = NULL;
@@ -141,7 +141,7 @@ void setup() {
     "displayUpdate",
     32,
     NULL,
-    1,
+    2,
     &displayUpdateHandle );
 
   TaskHandle_t msgOutHandle = NULL;
@@ -150,7 +150,7 @@ void setup() {
     "msgOut",
     32,
     NULL,
-    1,
+    4,
     &msgOutHandle );
 
   TaskHandle_t msgInHandle = NULL;
@@ -159,7 +159,7 @@ void setup() {
     "msgIn",
     32,
     NULL,
-    4,
+    3,
     &msgInHandle );
 
     TaskHandle_t LFOTaskHandle = NULL;
@@ -168,7 +168,7 @@ void setup() {
     "LFOtask",
     32,
     NULL,
-    4,
+    5,
     &LFOTaskHandle );
 
     TaskHandle_t SustainCounterTaskHandle = NULL;
@@ -177,7 +177,7 @@ void setup() {
     "SustainCounterTask",
     8,
     NULL,
-    4,
+    6,
     &SustainCounterTaskHandle );
 
   msgOutQ = xQueueCreate( 8, 4 );
