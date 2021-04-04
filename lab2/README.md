@@ -17,9 +17,9 @@ Knobs:
 - Knob 3: Volume
 
 Joystick:
-- X movement: WHAMMY BAR
-- Y movement: VIBRATO SPEED
-- Button: RESET VIBRATO OPTIONS TO DEFAULT
+- X movement: Whammy Bar
+- Y movement: Vibrato Speed
+- Button: Reset Vibrato Options to Default
 
 
 💘 *Ed Stott* 💘
