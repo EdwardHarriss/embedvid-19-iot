@@ -1,3 +1,7 @@
+##HOW TO USE
+
+upload main.ino to the arduino using your favourite compiler 😁
+
 ##BUTTON/KNOB MAPPING
 
 Buttons:
